@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b2f25" />
+  <meta name="description" content="A browser-first fantasy football draft, trade, waiver, and roster assistant." />
+  <title>Fantasy Football Oracle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="topbar">
+    <a class="brand" href="#draft" aria-label="Fantasy Football Oracle home">
+      <span class="brand-mark" aria-hidden="true">
+        <span class="football-lace"></span>
+      </span>
+      <span>
+        <strong>Fantasy Football Oracle</strong>
+        <small>Live draft + season command center</small>
+      </span>
+    </a>
+    <nav class="view-tabs" aria-label="Primary">
+      <button class="view-tab is-active" type="button" data-view="draft">Draft room</button>
+      <button class="view-tab" type="button" data-view="team">Team manager</button>
+      <button class="view-tab" type="button" data-view="trade">Trade lab</button>
+      <button class="view-tab" type="button" data-view="connect">Connect</button>
+    </nav>
+    <div class="top-actions">
+      <button class="button button-ghost" type="button" id="export-state-button">Export</button>
+      <button class="button button-signal" type="button" id="open-setup-button">League setup</button>
+    </div>
+  </header>
+  <main id="main-content">
+    <section class="status-ribbon" aria-label="Data and league status">
+      <span class="status-light" id="data-status-light" aria-hidden="true"></span>
+      <strong id="data-status-text">Loading 2026 player data</strong>
+      <span class="status-divider" aria-hidden="true"></span>
+      <span id="league-status-text">12-team PPR · Pick 6</span>
+      <span class="status-spacer"></span>
+      <button class="text-button" type="button" id="refresh-trends-button">Refresh waiver trends</button>
+    </section>
+
+    <section class="app-view is-active" id="view-draft" data-view-panel="draft">
+      <div class="field-command" id="draft-command-card">
+        <div class="field-lines" aria-hidden="true"></div>
+        <div class="command-meta">
+          <span class="eyebrow" id="draft-clock-label">On the clock</span>
+          <strong id="draft-clock-value">Round 1 · Pick 1</strong>
+          <span id="draft-clock-team">Team 1</span>
+        </div>
+        <div class="command-player" id="top-recommendation">
+          <div class="player-avatar player-avatar-large" aria-hidden="true"></div>
+          <div>
+            <span class="play-call">Oracle's call</span>
+            <h1>Calculating the best pick…</h1>
+            <p>Value over replacement, roster need, tier cliffs, ADP, and risk are being combined.</p>
+          </div>
+        </div>
+        <div class="command-actions">
+          <label class="compact-field">
+            <span>Assign current pick to</span>
+            <select id="draft-team-override" aria-label="Team making the current pick"></select>
+          </label>
+          <button class="button button-signal button-large" type="button" id="draft-top-player-button" disabled>
+            Draft recommendation
+          </button>
+        </div>
+      </div>
+
+      <div class="draft-workspace">
+        <section class="sheet panel-player-pool" aria-labelledby="player-pool-title">
+          <div class="sheet-heading">
+            <div>
+              <span class="sheet-kicker">Available board</span>
+              <h2 id="player-pool-title">Player pool</h2>
+            </div>
+            <span class="count-chip" id="available-player-count">0 available</span>
+          </div>
+          <div class="filter-bar">
+            <label class="search-field">
+              <span class="sr-only">Search players</span>
+              <input type="search" id="draft-player-search" placeholder="Search player or team" autocomplete="off" />
+            </label>
+            <label>
+              <span class="sr-only">Position</span>
+              <select id="draft-position-filter">
+                <option value="ALL">All positions</option>
+                <option value="QB">QB</option>
+                <option value="RB">RB</option>
+                <option value="WR">WR</option>
+                <option value="TE">TE</option>
+                <option value="DST">D/ST</option>
+                <option value="K">K</option>
+              </select>
+            </label>
+            <label>
+              <span class="sr-only">Sort players</span>
+              <select id="draft-sort-select">
+                <option value="oracle">Oracle score</option>
+                <option value="rank">Consensus rank</option>
+                <option value="projection">Projection</option>
+                <option value="adp">ADP</option>
+              </select>
+            </label>
+          </div>
+          <div class="player-table" id="draft-player-list" role="list"></div>
+        </section>
+        <section class="board panel-draft-board" aria-labelledby="draft-board-title">
+          <div class="board-heading">
+            <div>
+              <span class="sheet-kicker">Live room</span>
+              <h2 id="draft-board-title">Draft board</h2>
+            </div>
+            <div class="inline-actions">
+              <button class="button button-small button-ghost" type="button" id="undo-pick-button">Undo</button>
+              <button class="button button-small button-danger" type="button" id="reset-draft-button">Reset</button>
+            </div>
+          </div>
+          <div class="draft-board-scroll">
+            <div class="draft-board" id="draft-board"></div>
+          </div>
+          <div class="board-footer">
+            <span id="next-user-pick-text">Your next pick is being calculated.</span>
+            <span id="draft-progress-text">0 of 192 picks</span>
+          </div>
+        </section>
+
+        <aside class="clipboard panel-my-draft" aria-labelledby="my-draft-title">
+          <div class="clipboard-clip" aria-hidden="true"></div>
+          <div class="sheet-heading">
+            <div>
+              <span class="sheet-kicker">Roster construction</span>
+              <h2 id="my-draft-title">My draft</h2>
+            </div>
+            <span class="team-chip" id="my-draft-team-chip">Team 6</span>
+          </div>
+          <div class="roster-needs" id="draft-roster-needs"></div>
+          <div class="roster-list" id="my-draft-roster"></div>
+          <div class="strategy-note" id="draft-strategy-note">
+            <strong>Build signal</strong>
+            <p>Your roster construction guidance will appear after the first pick.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="app-view" id="view-team" data-view-panel="team" hidden>
+      <div class="view-intro">
+        <div>
+          <span class="eyebrow">Weekly operations</span>
+          <h1>Set the strongest lineup. Find the upgrade.</h1>
+          <p>Use the drafted roster, build one manually, or import your league. The optimizer respects every starter and flex slot.</p>
+        </div>
+        <div class="view-intro-actions">
+          <button class="button button-ghost" type="button" id="use-draft-roster-button">Use my drafted roster</button>
+          <button class="button button-signal" type="button" id="optimize-lineup-button">Optimize lineup</button>
+        </div>
+      </div>
+
+      <div class="team-workspace">
+        <section class="sheet lineup-sheet" aria-labelledby="lineup-title">
+          <div class="sheet-heading">
+            <div>
+              <span class="sheet-kicker">Recommended starters</span>
+              <h2 id="lineup-title">Optimized lineup</h2>
+            </div>
+            <strong class="projection-total" id="lineup-total">0.0 pts</strong>
+          </div>
+          <div class="lineup-grid" id="optimized-lineup"></div>
+        </section>
+
+        <section class="sheet roster-sheet" aria-labelledby="roster-title">
+          <div class="sheet-heading">
+            <div>
+              <span class="sheet-kicker">Current assets</span>
+              <h2 id="roster-title">My roster</h2>
+            </div>
+            <span class="count-chip" id="manual-roster-count">0 players</span>
+          </div>
+          <label class="search-field roster-add-field">
+            <span class="sr-only">Search to add a player</span>
+            <input type="search" id="roster-player-search" placeholder="Add a player to your roster" autocomplete="off" />
+          </label>
+          <div class="search-results" id="roster-search-results"></div>
+          <div class="roster-list" id="manual-roster-list"></div>
+        </section>
+        <section class="board waiver-board" aria-labelledby="waiver-title">
+          <div class="board-heading">
+            <div>
+              <span class="sheet-kicker">Free-agent radar</span>
+              <h2 id="waiver-title">Waiver upgrades</h2>
+            </div>
+            <span class="live-badge" id="trending-status">Sleeper trends</span>
+          </div>
+          <div class="waiver-list" id="waiver-recommendations"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="app-view" id="view-trade" data-view-panel="trade" hidden>
+      <div class="view-intro">
+        <div>
+          <span class="eyebrow">Asset exchange</span>
+          <h1>Measure the trade after the lineup changes.</h1>
+          <p>The grade combines weekly starter impact, replacement value, depth, injury risk, and deal fairness.</p>
+        </div>
+        <button class="button button-ghost" type="button" id="clear-trade-button">Clear trade</button>
+      </div>
+
+      <div class="trade-workspace">
+        <section class="trade-side trade-side-give" aria-labelledby="trade-give-title">
+          <div class="trade-side-heading">
+            <span class="trade-direction">You send</span>
+            <h2 id="trade-give-title">Your assets</h2>
+          </div>
+          <label class="search-field">
+            <span class="sr-only">Search your roster</span>
+            <input type="search" id="trade-give-search" placeholder="Search your roster" autocomplete="off" />
+          </label>
+          <div class="trade-search-results" id="trade-give-results"></div>
+          <div class="trade-selection" id="trade-give-selection"></div>
+        </section>
+
+        <section class="trade-verdict" aria-live="polite">
+          <span class="verdict-label">Oracle verdict</span>
+          <div class="trade-grade" id="trade-grade">—</div>
+          <h2 id="trade-verdict-title">Choose both sides</h2>
+          <p id="trade-verdict-summary">Add players to calculate lineup impact and trade value.</p>
+          <div class="trade-metrics">
+            <div><span>Lineup</span><strong id="trade-lineup-gain">—</strong></div>
+            <div><span>Asset value</span><strong id="trade-asset-gain">—</strong></div>
+            <div><span>Fairness</span><strong id="trade-fairness">—</strong></div>
+          </div>
+          <div class="fairness-meter" aria-hidden="true"><span id="trade-fairness-bar"></span></div>
+        </section>
+
+        <section class="trade-side trade-side-receive" aria-labelledby="trade-receive-title">
+          <div class="trade-side-heading">
+            <span class="trade-direction">You receive</span>
+            <h2 id="trade-receive-title">Target assets</h2>
+          </div>
+          <label class="search-field">
+            <span class="sr-only">Search all players</span>
+            <input type="search" id="trade-receive-search" placeholder="Search player pool" autocomplete="off" />
+          </label>
+          <div class="trade-search-results" id="trade-receive-results"></div>
+          <div class="trade-selection" id="trade-receive-selection"></div>
+        </section>
+      </div>
+    </section>
+    <section class="app-view" id="view-connect" data-view-panel="connect" hidden>
+      <div class="view-intro">
+        <div>
+          <span class="eyebrow">League connections</span>
+          <h1>Bring your league into the browser.</h1>
+          <p>Imports are read-only. League state and private identifiers remain on this device unless you export them.</p>
+        </div>
+        <span class="privacy-seal">Local-first</span>
+      </div>
+
+      <div class="connect-workspace">
+        <section class="connection-card connection-card-sleeper" aria-labelledby="sleeper-title">
+          <div class="connection-brand">
+            <span class="connection-logo">S</span>
+            <div>
+              <span class="sheet-kicker">Automatic import</span>
+              <h2 id="sleeper-title">Sleeper</h2>
+            </div>
+          </div>
+          <p>Import league settings, rosters, and draft picks through Sleeper's public read-only API.</p>
+          <div class="form-grid">
+            <label>
+              <span>Username</span>
+              <input type="text" id="sleeper-username" placeholder="Sleeper username" autocomplete="off" />
+            </label>
+            <label>
+              <span>Season</span>
+              <input type="number" id="sleeper-season" value="2026" min="2018" max="2035" />
+            </label>
+          </div>
+          <button class="button button-dark" type="button" id="find-sleeper-leagues-button">Find my leagues</button>
+          <label class="select-stack" id="sleeper-league-field" hidden>
+            <span>League</span>
+            <select id="sleeper-league-select"></select>
+          </label>
+          <button class="button button-signal" type="button" id="import-sleeper-button" hidden>Import selected league</button>
+          <p class="connection-status" id="sleeper-status" role="status">Not connected.</p>
+        </section>
+
+        <section class="connection-card connection-card-espn" aria-labelledby="espn-title">
+          <div class="connection-brand">
+            <span class="connection-logo">E</span>
+            <div>
+              <span class="sheet-kicker">Public or private league</span>
+              <h2 id="espn-title">ESPN Fantasy</h2>
+            </div>
+          </div>
+          <p>Public leagues can import directly. Private leagues use the optional ESPN userscript so your login cookies never leave ESPN.</p>
+          <div class="form-grid">
+            <label>
+              <span>League ID</span>
+              <input type="text" id="espn-league-id" placeholder="123456789" inputmode="numeric" />
+            </label>
+            <label>
+              <span>Season</span>
+              <input type="number" id="espn-season" value="2026" min="2018" max="2035" />
+            </label>
+            <label>
+              <span>My ESPN team ID</span>
+              <input type="number" id="espn-team-id" value="1" min="1" max="50" />
+            </label>
+          </div>
+          <div class="connection-actions">
+            <button class="button button-dark" type="button" id="import-espn-public-button">Import public league</button>
+            <a class="button button-ghost" href="tools/espn-oracle.user.js" download>Download private-league bridge</a>
+          </div>
+          <p class="connection-status" id="espn-status" role="status">Waiting for a public import or ESPN bridge message.</p>
+        </section>
+        <section class="connection-card connection-card-local" aria-labelledby="local-title">
+          <div class="connection-brand">
+            <span class="connection-logo">↥</span>
+            <div>
+              <span class="sheet-kicker">Portable state</span>
+              <h2 id="local-title">Import a saved Oracle file</h2>
+            </div>
+          </div>
+          <p>Restore a league, draft board, roster, and trade workspace from a JSON export.</p>
+          <label class="file-drop" for="import-state-file">
+            <input type="file" id="import-state-file" accept="application/json,.json" />
+            <strong>Choose an Oracle JSON file</strong>
+            <span>The file is read locally and is not uploaded.</span>
+          </label>
+          <button class="button button-ghost" type="button" id="refresh-player-data-button">Refresh ESPN player snapshot</button>
+          <p class="connection-status" id="player-refresh-status" role="status">Using the bundled data snapshot.</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="setup-dialog" id="setup-dialog">
+    <form method="dialog" id="setup-form">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">League configuration</span>
+          <h2>Set the board rules</h2>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Close setup">×</button>
+      </div>
+      <div class="setup-grid">
+        <label><span>Teams</span><input type="number" name="teams" min="4" max="20" required /></label>
+        <label><span>Draft rounds</span><input type="number" name="rounds" min="4" max="30" required /></label>
+        <label><span>My draft position</span><input type="number" name="draftPosition" min="1" max="20" required /></label>
+        <label>
+          <span>Scoring</span>
+          <select name="scoring">
+            <option value="ppr">PPR</option>
+            <option value="half">Half PPR</option>
+            <option value="standard">Standard</option>
+            <option value="superflex">Superflex</option>
+          </select>
+        </label>
+        <label><span>QB</span><input type="number" name="QB" min="0" max="3" /></label>
+        <label><span>RB</span><input type="number" name="RB" min="0" max="5" /></label>
+        <label><span>WR</span><input type="number" name="WR" min="0" max="6" /></label>
+        <label><span>TE</span><input type="number" name="TE" min="0" max="3" /></label>
+        <label><span>FLEX</span><input type="number" name="FLEX" min="0" max="4" /></label>
+        <label><span>SUPERFLEX</span><input type="number" name="SUPERFLEX" min="0" max="3" /></label>
+        <label><span>D/ST</span><input type="number" name="DST" min="0" max="2" /></label>
+        <label><span>K</span><input type="number" name="K" min="0" max="2" /></label>
+        <label><span>Bench</span><input type="number" name="BN" min="0" max="15" /></label>
+      </div>
+      <label class="range-field">
+        <span>Risk tolerance <output id="risk-output">Balanced</output></span>
+        <input type="range" name="riskTolerance" min="0" max="1" step="0.05" />
+      </label>
+      <p class="dialog-warning" id="setup-reset-warning" hidden>Changing team count or rounds resets the current draft board.</p>
+      <div class="dialog-actions">
+        <button class="button button-ghost" value="cancel">Cancel</button>
+        <button class="button button-signal" type="submit" value="default">Apply settings</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <script src="app-core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
