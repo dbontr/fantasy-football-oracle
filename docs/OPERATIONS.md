@@ -1,6 +1,6 @@
 # Championship Operations
 
-Fantasy Football Oracle 4.0 runs the native analysis engine behind a provenance, recovery, governance, and observability control plane.
+Fantasy Football Oracle 5.0 runs the native analysis engine behind a provenance, recovery, governance, and observability control plane.
 
 ## Public operational states
 
@@ -29,6 +29,14 @@ Detailed metrics, manifests, events, decisions, and governance changes are restr
 - model registration, promotion, rollback, and drift-observation writes
 
 Do not expose restricted routes through an unprotected public reverse proxy.
+
+## Temporal evidence operations
+
+The v5 evidence ledger is append-only and hash chained. `GET /api/v5/status` reports its sequence and head digest. `GET /api/ready` returns `advanced-evidence-invalid` when the ledger cannot be trusted.
+
+Use `POST /api/v5/evidence` only for durable observations from an identified source. Corrections are new observations with their own timestamps; do not edit the JSONL file. Public `POST /api/v5/what-if` requests are temporary and never enter the ledger. Raw search through `GET /api/v5/evidence` requires administrator authorization.
+
+During recovery, stop every Oracle instance and restore the evidence ledger with the event store and decision history from one verified package. Run strict readiness and production smoke before accepting traffic.
 
 ## Data refresh
 

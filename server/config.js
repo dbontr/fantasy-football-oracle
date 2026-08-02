@@ -33,6 +33,9 @@ module.exports = Object.freeze({
   platformRuntimeDir: path.resolve(
     process.env.ORACLE_PLATFORM_RUNTIME_DIR || path.join(runtimeDir, "platform"),
   ),
+  advancedRuntimeDir: path.resolve(
+    process.env.ORACLE_ADVANCED_RUNTIME_DIR || path.join(runtimeDir, "platform", "advanced-intelligence"),
+  ),
   shutdownRequestPath: process.env.ORACLE_SHUTDOWN_REQUEST_PATH
     ? path.resolve(process.env.ORACLE_SHUTDOWN_REQUEST_PATH)
     : "",
@@ -68,6 +71,16 @@ module.exports = Object.freeze({
     Math.max(1, cpuCount),
   ),
   maxQueue: integer(process.env.ORACLE_MAX_QUEUE, 64, 4, 1000),
+  maxEvidenceObservations: integer(
+    process.env.ORACLE_MAX_EVIDENCE_OBSERVATIONS, 250_000, 100, 5_000_000,
+  ),
+  maxEvidenceBatch: integer(process.env.ORACLE_MAX_EVIDENCE_BATCH, 500, 1, 5000),
+  maxAdvancedForecastPlayers: integer(
+    process.env.ORACLE_MAX_ADVANCED_FORECAST_PLAYERS, 64, 1, 128,
+  ),
+  maxAdvancedScenarios: integer(
+    process.env.ORACLE_MAX_ADVANCED_SCENARIOS, 50_000, 100, 50_000,
+  ),
   taskTimeoutMs: duration(process.env.ORACLE_TASK_TIMEOUT_MS, 45_000, 2_000, 300_000),
   defaultSimulations: integer(process.env.ORACLE_DEFAULT_SIMULATIONS, 15_000, 100, 50_000),
   maxSimulations: integer(process.env.ORACLE_MAX_SIMULATIONS, 50_000, 1_000, 250_000),

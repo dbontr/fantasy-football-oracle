@@ -33,6 +33,20 @@ CXX=g++ npm run build:native
 ```
 
 The application does not automatically load `.env`; pass settings through the shell, process manager, container, or hosting platform.
+## Version 5 evidence and scenario runtime
+
+The v5 evidence ledger is runtime state, not a release artifact. It defaults to `ORACLE_PLATFORM_RUNTIME_DIR/advanced-intelligence/evidence.jsonl` and must be placed on persistent storage. Readiness fails if the ledger cannot initialize or its hash chain is invalid.
+
+```text
+ORACLE_ADVANCED_RUNTIME_DIR=/persistent/oracle-runtime/platform/advanced-intelligence
+ORACLE_MAX_EVIDENCE_OBSERVATIONS=250000
+ORACLE_MAX_EVIDENCE_BATCH=500
+ORACLE_MAX_ADVANCED_FORECAST_PLAYERS=64
+ORACLE_MAX_ADVANCED_SCENARIOS=50000
+```
+
+Persistent evidence ingestion and raw evidence search are administrative routes. Public forecast and what-if requests cannot mutate the ledger. Back up the complete runtime directory so the evidence chain, event store, snapshots, registry, drift history, and decision ledger come from one recovery point.
+
 ## Native engine settings
 
 ```text
@@ -219,7 +233,7 @@ Scheduled refreshes require no credential. `POST /api/data/refresh` is protected
 
 Successful administrative responses and all error responses are marked `Cache-Control: no-store`. Internal 5xx details remain in structured logs; callers receive a generic message and a request ID for correlation. Store the token in the hosting secret store, never in the repository.
 
-## Version 4.0 control plane
+## Version 5.0 control plane
 
 Production should configure a persistent writable `ORACLE_PLATFORM_RUNTIME_DIR`. This directory stores the append-only event chain, immutable snapshot catalog, decision ledger, runtime model registry, drift observations, and the latest verified backup status. It must not be served as static content.
 

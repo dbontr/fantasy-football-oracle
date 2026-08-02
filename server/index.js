@@ -32,6 +32,9 @@ const STATIC_FILES = new Set([
   "simulation-worker.js",
   "service-worker.js",
   "manifest.webmanifest",
+  "lab.html",
+  "lab.css",
+  "lab.js",
 ]);
 
 function isAllowedStaticPath(pathName) {

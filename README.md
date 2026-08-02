@@ -1,8 +1,23 @@
 # Fantasy Football Oracle
 
-Fantasy Football Oracle is a native-powered fantasy-football decision system for live drafts and in-season management. A C++20 analysis engine performs the expensive simulations and optimization while Node.js handles APIs, data refresh, security, ESPN/Sleeper integrations, and process orchestration.
+Fantasy Football Oracle 5.0 is a temporal, probabilistic fantasy-football decision system for live drafts and in-season management. A C++20 analysis engine performs the expensive simulations and optimization while Node.js handles APIs, data refresh, security, ESPN/Sleeper integrations, and process orchestration.
 
 The browser remains installable and responsive. It keeps a deterministic JavaScript engine and Web Worker for offline or degraded operation, but a healthy server routes analysis to persistent C++ workers.
+
+## Temporal probabilistic architecture 5.0
+
+Version 5.0 adds a temporal decision layer above the native simulation engine:
+
+- an append-only, hash-chained evidence ledger with observed, effective, and expiry times;
+- true as-of replay, deterministic deduplication, source reliability, freshness decay, and conflict reconciliation;
+- zero-inflated player distributions that separate active probability from active performance;
+- aleatoric, epistemic, availability, recurrence, and source-conflict uncertainty;
+- game, team, position, and player latent factors for correlated paired scenarios;
+- robust portfolio ranking by expected output, lower-tail CVaR, probability of being best, and paired regret;
+- risk-aversion sensitivity, Pareto frontiers, reversal thresholds, and value-of-information priorities;
+- a Research Lab at `/lab.html` for probability ranges, temporary evidence what-ifs, and paired lineup comparison.
+
+The evidence architecture accepts market, role, health, weather, matchup, offensive-line, tracking, news, and coaching observations. It does not claim that those feeds are connected. Missing evidence remains visible, and conflicting sources widen uncertainty rather than being silently averaged into false precision.
 
 ## Championship architecture 4.0
 
@@ -271,6 +286,15 @@ Useful endpoints:
 - `GET /api/models/drift`
 - `GET /api/championship/status`
 - `POST /api/championship/evaluate`
+- `GET /api/v5/status`
+- `GET /api/v5/catalog`
+- `GET /api/v5/players/:id/forecast`
+- `GET /api/v5/players/:id/evidence`
+- `POST /api/v5/forecast`
+- `POST /api/v5/what-if`
+- `POST /api/v5/portfolio/evaluate`
+- `POST /api/v5/evidence` (administrator)
+- `GET /api/v5/evidence` (administrator)
 
 `GET /api/ready` is the minimal no-store readiness probe used by containers and load balancers. Detailed `/api/health` telemetry identifies whether requests are using native C++, reports feed lineage, integrity, snapshots, model governance, drift, recovery age, queue health, and SLO state. Detailed metrics, manifests, event history, decision history, and model-control writes require local or authenticated administrative access.
 
@@ -304,6 +328,11 @@ ORACLE_DEFAULT_SIMULATIONS=15000
 ORACLE_MAX_SIMULATIONS=50000
 ORACLE_MAX_QUEUE=64
 ORACLE_TASK_TIMEOUT_MS=45000
+ORACLE_ADVANCED_RUNTIME_DIR=
+ORACLE_MAX_EVIDENCE_OBSERVATIONS=250000
+ORACLE_MAX_EVIDENCE_BATCH=500
+ORACLE_MAX_ADVANCED_FORECAST_PLAYERS=64
+ORACLE_MAX_ADVANCED_SCENARIOS=50000
 ```
 
 Production containers set `ORACLE_NATIVE_REQUIRED=true`. Local development can leave it false to retain JavaScript fallback when a compiler or binary is unavailable.
@@ -376,6 +405,13 @@ The current suite includes health and recovery intelligence, coaching intelligen
 - `server/native-engine-pool.js` — persistent native-process pool
 - `server/hybrid-compute-pool.js` — native-first routing and JS fallback
 - `server/api.js` — validated analysis and data API
+- `server/evidence-store.js` - append-only temporal evidence ledger and source reconciliation
+- `server/feature-catalog.js` - bounded feature definitions and freshness policies
+- `server/probabilistic-forecast.js` - zero-inflated distributions and uncertainty decomposition
+- `server/scenario-engine.js` - correlated, order-independent paired future simulation
+- `server/robust-decision.js` - probability-of-best, regret, CVaR, Pareto, and sensitivity ranking
+- `server/advanced-intelligence.js` - v5 lifecycle, limits, digests, forecasts, and portfolios
+- `lab.html`, `lab.css`, `lab.js` - Research Lab for distributions, what-ifs, and paired slates
 - `server/coaching-model.js` — evidence-shrunk staff, scheme, leadership, and development model
 - `server/opportunity-model.js` — historical usage, regression, analog, and age-curve integration
 - `server/health-model.js` — live injury, practice, news, return-window, recovery-ramp, and recurrence intelligence
@@ -415,7 +451,9 @@ The current suite includes health and recovery intelligence, coaching intelligen
 - Historical usage models cover QB/RB/WR/TE and use weekly box-score opportunity rather than route participation, targets per route, red-zone opportunity, or tracking geometry. Role changes are damped by current market signals but cannot be inferred perfectly.
 - Team ecosystem, depth-chart share, and matchup grades are inference proxies until snap, route, tracking, betting, offensive-line, and weather feeds are connected.
 - Health intelligence uses public designation, body-part, practice, and article metadata; exact diagnosis, surgery date, rehabilitation testing, and team medical clearance are often unavailable. Return estimates describe fantasy performance rather than medical recovery.
-- The current ensemble does not independently ingest licensed projections, betting markets, offensive-line grades, route participation, tracking data, or real-time weather.
+- Version 5 defines, reconciles, and applies licensed-projection, betting-market, offensive-line, route, tracking, and weather evidence, but it does not bundle or fabricate those feeds. Production quality depends on observations supplied by authorized connectors.
+- Correlation currently uses transparent hand-specified latent-factor loadings. It is not yet calibrated from play-level covariance or a learned copula.
+- The evidence model supports observational reconciliation and counterfactual overlays; it does not identify causal treatment effects.
 - League simulations assume the supplied rosters, schedule, and current player distributions; future transactions are not modeled automatically.
 - Full waiver accuracy requires complete league rosters. Historical waiver validation approximates availability from undrafted players and does not reconstruct real priority or FAAB competition.
 - Trade calibration currently uses synthetic preseason one-for-one offers; manager acceptance, keeper costs, and real transaction histories are not yet modeled.

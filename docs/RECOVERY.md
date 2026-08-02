@@ -1,6 +1,6 @@
 # Recovery and Continuity
 
-Fantasy Football Oracle 4.0 treats recovery as a tested product capability. A backup is not considered useful until checksums, the Git bundle, ignored assets, and an isolated restoration all pass.
+Fantasy Football Oracle 5.0 treats recovery as a tested product capability. A backup is not considered useful until checksums, the Git bundle, ignored assets, and an isolated restoration all pass.
 
 ## Recovery objectives
 

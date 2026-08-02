@@ -14,6 +14,12 @@ The application may process league identifiers, team names, rosters, decision hi
 
 Secrets must be supplied through environment variables or the hosting platform's secret store. Never place authentication values in browser state, recovery manifests, event payloads, screenshots, source files, or committed `.env` files.
 
+## Evidence and what-if boundaries
+
+Durable v5 evidence is operational data. Persistent writes through `POST /api/v5/evidence` and raw searches through `GET /api/v5/evidence` require administrator authorization. Public `POST /api/v5/what-if` requests are request-scoped overlays and cannot mutate the ledger. Resolved player evidence exposes bounded provenance summaries, not absolute paths or connector credentials.
+
+Do not include access tokens, private medical records, account identifiers, or licensed raw-feed payloads in evidence metadata. Store connector credentials outside Oracle and ingest only the normalized observation needed for a forecast.
+
 ## Administrative surfaces
 
 Detailed metrics, artifact manifests, event history, decision records, model promotion, rollback, drift writes, and manual refresh are restricted to direct loopback access unless an administrator credential is configured. Requests carrying proxy-forwarding headers always require `ORACLE_ADMIN_TOKEN`, even when the proxy socket is loopback. Public health output intentionally removes absolute filesystem paths and replica destinations; `/api/ready` provides the smaller production probe.

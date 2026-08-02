@@ -26,6 +26,7 @@ function services(overrides = {}) {
     controlPlane: {
       artifacts: { status: () => ({ valid: true }) },
       eventStore: { status: () => ({ valid: true }) },
+      advanced: { status: () => ({ initialized: true, evidence: { valid: true } }) },
       ...overrides.controlPlane,
     },
   };
@@ -45,6 +46,8 @@ test("readiness is healthy when required dependencies are healthy", () => {
     strictArtifacts: true,
     artifactValid: true,
     eventChainValid: true,
+    advancedReady: true,
+    advancedEvidenceValid: true,
     failures: [],
   });
 });
@@ -104,4 +107,16 @@ test("fallback compute is ready when native is not required", () => {
   }));
   assert.equal(result.ready, true);
   assert.equal(result.nativeAvailable, false);
+});
+
+test("readiness fails when the advanced evidence chain is invalid", () => {
+  const result = readinessSnapshot(services({
+    controlPlane: {
+      advanced: { status: () => ({ initialized: true, evidence: { valid: false } }) },
+    },
+  }));
+  assert.equal(result.ready, false);
+  assert.equal(result.advancedReady, true);
+  assert.equal(result.advancedEvidenceValid, false);
+  assert.ok(result.failures.includes("advanced-evidence-invalid"));
 });

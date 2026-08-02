@@ -20,6 +20,10 @@ function validateReadiness(payload = {}) {
   assertCondition(payload.status === "ready", `Unexpected readiness status: ${payload.status || "missing"}`);
   assertCondition(payload.dataReady === true, "Player data is not ready");
   assertCondition(payload.eventChainValid === true, "Event chain is not valid");
+  if (payload.advancedReady !== null && payload.advancedReady !== undefined) {
+    assertCondition(payload.advancedReady === true, "Advanced intelligence is not ready");
+    assertCondition(payload.advancedEvidenceValid === true, "Advanced evidence chain is invalid");
+  }
   if (payload.nativeRequired) {
     assertCondition(payload.nativeAvailable === true, "Required native engine is unavailable");
     assertCondition(Number(payload.liveWorkers || 0) > 0, "Required native workers are not live");
@@ -59,7 +63,14 @@ async function runSmoke(options = {}) {
   const html = await root.text();
   assertCondition(root.ok, `Application shell returned HTTP ${root.status}`);
   assertCondition(/Championship control center/i.test(html), "Application shell is missing the championship control center");
-  return { baseUrl, readiness, health, rootStatus: root.status };
+  const lab = await fetch(`${baseUrl}/lab.html`, { signal: AbortSignal.timeout(15_000) });
+  const labHtml = await lab.text();
+  assertCondition(lab.ok, `Research Lab returned HTTP ${lab.status}`);
+  assertCondition(/Probability film room/i.test(labHtml), "Research Lab is missing the probability film room");
+  const v5 = await fetchJson(`${baseUrl}/api/v5/status`);
+  assertCondition(v5.initialized === true, "Advanced intelligence status is not initialized");
+  assertCondition(v5.evidence?.valid === true, "Advanced evidence status is invalid");
+  return { baseUrl, readiness, health, rootStatus: root.status, labStatus: lab.status, v5 };
 }
 async function main() {
   const result = await runSmoke({
@@ -70,11 +81,15 @@ async function main() {
     ok: true,
     baseUrl: result.baseUrl,
     rootStatus: result.rootStatus,
+    labStatus: result.labStatus,
+    v5EvidenceObservations: result.v5.evidence.observations,
     liveWorkers: result.readiness.liveWorkers,
     readyWorkers: result.readiness.readyWorkers,
     nativeAvailable: result.readiness.nativeAvailable,
     artifactValid: result.readiness.artifactValid,
     strictArtifacts: result.readiness.strictArtifacts,
+    advancedReady: result.readiness.advancedReady,
+    advancedEvidenceValid: result.readiness.advancedEvidenceValid,
   })}\n`);
 }
 

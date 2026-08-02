@@ -74,6 +74,135 @@ function commonBodySchema(properties = {}, required = []) {
   };
 }
 
+
+const EVIDENCE_SOURCE_SCHEMA = Object.freeze({
+  type: "object",
+  additionalProperties: false,
+  required: ["name"],
+  properties: {
+    name: { type: "string", minLength: 1, maxLength: 120 },
+    recordId: { type: "string", maxLength: 240 },
+    reliability: { type: "number", minimum: 0, maximum: 1 },
+  },
+});
+
+const EVIDENCE_OBSERVATION_SCHEMA = Object.freeze({
+  type: "object",
+  additionalProperties: false,
+  required: ["entityId", "feature", "value", "source"],
+  properties: {
+
+    id: { type: "string", maxLength: 160 },
+    entityType: { type: "string", minLength: 1, maxLength: 80 },
+    entityId: { type: "string", minLength: 1, maxLength: 160 },
+    feature: { type: "string", minLength: 1, maxLength: 160 },
+    value: { anyOf: [
+      { type: "number" }, { type: "string", maxLength: 500 }, { type: "boolean" },
+    ] },
+    unit: { type: "string", maxLength: 80 },
+    source: EVIDENCE_SOURCE_SCHEMA,
+    sourceRecordId: { type: "string", maxLength: 240 },
+    reliability: { type: "number", minimum: 0, maximum: 1 },
+    confidence: { type: "number", minimum: 0, maximum: 1 },
+    uncertainty: { type: "number", minimum: 0, maximum: 1000000 },
+    observedAt: { type: "string", format: "date-time" },
+    effectiveAt: { type: "string", format: "date-time" },
+    expiresAt: { anyOf: [
+      { type: "string", format: "date-time" }, { type: "null" },
+    ] },
+    metadata: { type: "object", additionalProperties: true },
+  },
+});
+
+function advancedForecastBodySchema(requireEvidence = false) {
+  return {
+    type: "object",
+    additionalProperties: false,
+
+    required: requireEvidence ? ["playerIds", "additionalObservations"] : ["playerIds"],
+    properties: {
+      playerIds: {
+        type: "array", minItems: 1, maxItems: 64,
+        uniqueItems: true,
+        items: { anyOf: [{ type: "string" }, { type: "number" }] },
+      },
+      week: { type: "integer", minimum: 1, maximum: 18 },
+      asOf: { type: "string", format: "date-time" },
+      additionalObservations: {
+        type: "array", maxItems: 500, items: EVIDENCE_OBSERVATION_SCHEMA,
+      },
+      gameIds: {
+        type: "object",
+        maxProperties: 64,
+        additionalProperties: { type: "string", maxLength: 160 },
+      },
+      bustThresholds: {
+        type: "object", maxProperties: 64,
+        additionalProperties: { type: "number", minimum: 0, maximum: 1000 },
+      },
+      ceilingThresholds: {
+        type: "object", maxProperties: 64,
+        additionalProperties: { type: "number", minimum: 0, maximum: 1000 },
+      },
+      informationLimit: { type: "integer", minimum: 1, maximum: 50 },
+    },
+  };
+}
+
+const PORTFOLIO_SCHEMA = Object.freeze({
+  type: "object",
+  additionalProperties: false,
+  required: ["playerIds"],
+  properties: {
+    id: { type: "string", maxLength: 160 },
+    label: { type: "string", maxLength: 240 },
+    playerIds: {
+      type: "array", minItems: 1, maxItems: 32, uniqueItems: true,
+      items: { anyOf: [{ type: "string" }, { type: "number" }] },
+    },
+    weights: {
+      type: "object", maxProperties: 32,
+      additionalProperties: { type: "number", minimum: 0, maximum: 100 },
+    },
+    metadata: { type: "object", additionalProperties: true },
+  },
+});
+
+const PORTFOLIO_BODY_SCHEMA = Object.freeze({
+  type: "object",
+  additionalProperties: false,
+  required: ["portfolios"],
+  properties: {
+    portfolios: { type: "array", minItems: 1, maxItems: 32, items: PORTFOLIO_SCHEMA },
+    week: { type: "integer", minimum: 1, maximum: 18 },
+    asOf: { type: "string", format: "date-time" },
+    additionalObservations: {
+      type: "array", maxItems: 500, items: EVIDENCE_OBSERVATION_SCHEMA,
+    },
+
+    scenarios: { type: "integer", minimum: 100, maximum: 50000 },
+    seed: { anyOf: [
+      { type: "integer" }, { type: "string", minLength: 1, maxLength: 160 },
+    ] },
+    riskAversion: { type: "number", minimum: 0, maximum: 1 },
+    regretPenalty: { type: "number", minimum: 0, maximum: 5 },
+    bestProbabilityBonus: { type: "number", minimum: 0, maximum: 1 },
+    target: { type: "number", minimum: 0, maximum: 10000 },
+    riskLevels: {
+      type: "array", maxItems: 10, uniqueItems: true,
+      items: { type: "number", minimum: 0, maximum: 1 },
+    },
+    correlationPairs: {
+      type: "array", maxItems: 50,
+      items: {
+        type: "array", minItems: 2, maxItems: 2,
+        items: { anyOf: [{ type: "string" }, { type: "number" }] },
+      },
+    },
+    informationLimit: { type: "integer", minimum: 1, maximum: 50 },
+  },
+});
+
 const ADMIN_REQUEST = Symbol("oracleAdminRequest");
 
 function constantTimeEqual(left, right) {
@@ -128,6 +257,7 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
     : compute;
   const artifacts = controlPlane.artifacts?.status?.() || {};
   const eventChain = controlPlane.eventStore?.status?.() || {};
+  const advanced = controlPlane.advanced?.status?.() || null;
   const failures = [];
   const nativeAvailable = native.available ?? null;
   const nativeWorkers = native.workers ?? native.readyWorkers ?? 0;
@@ -135,6 +265,8 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
   const readyWorkers = native.readyWorkers ?? liveWorkers;
   const artifactValid = artifacts.valid ?? null;
   const eventChainValid = eventChain.valid ?? null;
+  const advancedReady = advanced === null ? null : advanced.initialized === true;
+  const advancedEvidenceValid = advanced?.evidence?.valid ?? null;
 
   if (data.ready !== true) failures.push("player-data-unavailable");
   if (config.nativeRequired && (nativeAvailable !== true || liveWorkers < 1)) {
@@ -144,6 +276,9 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
     failures.push("artifact-integrity-invalid");
   }
   if (eventChainValid !== true) failures.push("event-chain-invalid");
+  if (advanced && (advancedReady !== true || advancedEvidenceValid !== true)) {
+    failures.push("advanced-evidence-invalid");
+  }
 
   return {
     ready: failures.length === 0,
@@ -158,6 +293,8 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
     strictArtifacts: Boolean(config.strictArtifactIntegrity),
     artifactValid,
     eventChainValid,
+    advancedReady,
+    advancedEvidenceValid,
     failures,
   };
 }
@@ -325,6 +462,110 @@ async function registerApiRoutes(fastify, services) {
     config: computeRouteConfig(4),
     schema: { body: { type: "object", additionalProperties: false, required: ["leagueState"], properties: { leagueState: { type: "object", additionalProperties: true }, actions: { type: "array", maxItems: 64, items: { type: "object", additionalProperties: true } }, simulations: { type: "integer", minimum: 500, maximum: 250000 }, seed: { type: "integer" } } } },
   }, async (request) => controlPlane.evaluateChampionship({ ...request.body, requestId: request.id }));
+
+
+  fastify.get("/api/v5/status", async (_request, reply) => (
+    reply.header("cache-control", "no-store").send(controlPlane.advancedStatus())
+  ));
+
+  fastify.get("/api/v5/catalog", async (_request, reply) => (
+    reply.header("cache-control", "public, max-age=300").send(controlPlane.advancedCatalog())
+  ));
+
+  fastify.get("/api/v5/players/:id/forecast", {
+    config: computeRouteConfig(30),
+    schema: { querystring: {
+      type: "object", additionalProperties: false,
+      properties: {
+        week: { type: "integer", minimum: 1, maximum: 18 },
+        asOf: { type: "string", format: "date-time" },
+      },
+    } },
+  }, async (request, reply) => {
+    const result = await controlPlane.advancedForecast({
+      playerIds: [request.params.id],
+      week: request.query?.week,
+      asOf: request.query?.asOf,
+    });
+    return reply.header("cache-control", "no-store").send({
+      ...result,
+      forecast: result.forecasts[0],
+      forecasts: undefined,
+    });
+  });
+
+  fastify.get("/api/v5/players/:id/evidence", {
+    schema: { querystring: {
+      type: "object", additionalProperties: false,
+      properties: { asOf: { type: "string", format: "date-time" } },
+    } },
+  }, async (request, reply) => reply
+    .header("cache-control", "no-store")
+    .send(controlPlane.advancedPlayerEvidence(request.params.id, {
+      asOf: request.query?.asOf,
+      includeObservations: false,
+    })));
+
+  fastify.post("/api/v5/forecast", {
+    config: computeRouteConfig(20),
+    schema: { body: advancedForecastBodySchema(false) },
+  }, async (request, reply) => reply
+    .header("cache-control", "no-store")
+    .send(await controlPlane.advancedForecast(request.body)));
+
+  fastify.post("/api/v5/what-if", {
+    config: computeRouteConfig(20),
+    schema: { body: advancedForecastBodySchema(true) },
+  }, async (request, reply) => reply
+    .header("cache-control", "no-store")
+    .send(await controlPlane.advancedForecast(request.body)));
+
+  fastify.post("/api/v5/portfolio/evaluate", {
+    config: computeRouteConfig(6),
+    schema: { body: PORTFOLIO_BODY_SCHEMA },
+  }, async (request, reply) => reply
+    .header("cache-control", "no-store")
+    .send(await controlPlane.advancedPortfolio({
+      ...request.body,
+      requestId: request.id,
+    })));
+
+  fastify.post("/api/v5/evidence", {
+    config: computeRouteConfig(12),
+    schema: { body: {
+      type: "object", additionalProperties: false,
+      required: ["observations"],
+      properties: {
+        observations: {
+          type: "array", minItems: 1, maxItems: 500,
+          items: EVIDENCE_OBSERVATION_SCHEMA,
+        },
+      },
+    } },
+  }, async (request, reply) => {
+    authorizeRefresh(request, config);
+    return reply.header("cache-control", "no-store").send(
+      await controlPlane.ingestAdvancedEvidence(request.body.observations, { source: "api" }),
+    );
+  });
+
+  fastify.get("/api/v5/evidence", {
+    schema: { querystring: {
+      type: "object", additionalProperties: false,
+      properties: {
+        entityType: { type: "string", maxLength: 80 },
+        entityId: { type: "string", maxLength: 160 },
+        feature: { type: "string", maxLength: 160 },
+        source: { type: "string", maxLength: 120 },
+        limit: { type: "integer", minimum: 1, maximum: 1000 },
+      },
+    } },
+  }, async (request, reply) => {
+    authorizeRefresh(request, config);
+    return reply.header("cache-control", "no-store").send(
+      controlPlane.advancedEvidence(request.query || {}),
+    );
+  });
 
   fastify.get("/api/model/blueprint", async () => modelBlueprint(dataStore.getDataset()));
 
@@ -827,6 +1068,9 @@ async function registerApiRoutes(fastify, services) {
 }
 
 module.exports = {
+  EVIDENCE_OBSERVATION_SCHEMA,
+  PORTFOLIO_BODY_SCHEMA,
+  advancedForecastBodySchema,
   authorizeAdmin,
   constantTimeEqual,
   readinessSnapshot,

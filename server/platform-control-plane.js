@@ -17,8 +17,9 @@ const { ChampionshipOptimizer } = require("./championship-optimizer.js");
 const { registrySummary } = require("./schema-registry.js");
 const { ModelRegistry } = require("./model-registry.js");
 const { DriftMonitor } = require("./drift-monitor.js");
+const { AdvancedIntelligence } = require("./advanced-intelligence.js");
 
-const PLATFORM_VERSION = "oracle-platform-2026.1";
+const PLATFORM_VERSION = "oracle-platform-2026.2-v5";
 const REQUEST_STARTED = Symbol("oracleRequestStarted");
 const DECISION_ROUTES = Object.freeze({
   "/api/draft/simulate": "draft-simulation",
@@ -101,6 +102,18 @@ class PlatformControlPlane {
     this.dataStore = null;
     this.pool = null;
     this.optimizer = null;
+    this.advanced = new AdvancedIntelligence({
+      datasetProvider: () => this.dataStore?.getDataset(),
+      runtimeDir: options.advancedRuntimeDir || (options.runtimeDir
+        ? path.join(this.runtimeDir, "advanced-intelligence")
+        : this.config.advancedRuntimeDir || path.join(this.runtimeDir, "advanced-intelligence")),
+      clock: this.clock,
+      logger: this.log,
+      maxForecastPlayers: this.config.maxAdvancedForecastPlayers || 64,
+      maxEvidenceBatch: this.config.maxEvidenceBatch || 500,
+      maxObservations: this.config.maxEvidenceObservations || 250000,
+      maxScenarios: this.config.maxAdvancedScenarios || 50000,
+    });
     this.initialized = false;
     this.startedAt = Number(this.clock());
     this.backupStatusPath = path.join(this.runtimeDir, "backup-status.json");
@@ -116,6 +129,7 @@ class PlatformControlPlane {
     await this.ledger.initialize();
     await this.models.initialize();
     await this.drift.initialize();
+    await this.advanced.initialize();
     const artifactStatus = await this.artifacts.initialize();
     this.health.set("artifact-integrity", artifactStatus.valid ? "healthy" : "degraded", {
       message: artifactStatus.valid ? "Committed artifacts match the manifest" : "Artifact manifest is missing or mismatched",
@@ -158,6 +172,7 @@ class PlatformControlPlane {
       artifactStatus,
       dataStatus: this.dataStore?.getStatus?.() || null,
       computeStatus: this.pool?.stats?.() || null,
+      advancedIntelligence: this.advanced.status(),
     }, { source: "platform-control-plane" });
     this.refreshComponents();
     return this.status();
@@ -248,6 +263,15 @@ class PlatformControlPlane {
     this.metrics.gauge("oracle_players_loaded", data.players || 0);
     this.metrics.gauge("oracle_compute_queue_depth", compute.queued || 0);
     this.metrics.gauge("oracle_native_workers_ready", compute.readyWorkers || 0);
+    const advanced = this.advanced?.status?.() || null;
+    if (advanced) {
+      this.health.set("advanced-intelligence", advanced.initialized && advanced.evidence.valid
+        ? "healthy" : "unsafe", {
+        message: advanced.evidence.valid ? null : "The v5 evidence chain is invalid",
+        details: advanced,
+      });
+      this.metrics.gauge("oracle_v5_evidence_observations", advanced.evidence.observations || 0);
+    }
   }
 
   attachFastify(fastify) {
@@ -447,6 +471,7 @@ class PlatformControlPlane {
       models: this.models.status(),
       drift: this.drift.status(),
       championship: this.optimizer?.status() || null,
+      advancedIntelligence: this.advanced?.status() || null,
       backup: publicBackup,
       health: componentHealth,
       slos: evaluateSLOs(metrics, this.config.sloTargets || {}),
@@ -471,6 +496,87 @@ class PlatformControlPlane {
 
   decisions(options = {}) {
     return this.ledger.list(options);
+  }
+
+  advancedStatus() {
+    this.ensureInitialized();
+    return this.advanced.status();
+  }
+
+  advancedCatalog() {
+    this.ensureInitialized();
+    return this.advanced.status().catalog;
+  }
+
+  advancedEvidence(options = {}) {
+    this.ensureInitialized();
+    return this.advanced.queryEvidence(options);
+  }
+
+  advancedPlayerEvidence(id, options = {}) {
+    this.ensureInitialized();
+    return this.advanced.playerEvidence(id, options);
+  }
+
+  async ingestAdvancedEvidence(rows, metadata = {}) {
+    this.ensureInitialized();
+    const result = await this.advanced.ingestEvidence(rows);
+    this.metrics.increment("oracle_v5_evidence_ingested_total", result.accepted, {
+      source: metadata.source || "api",
+    });
+    await this.eventStore.append("intelligence.evidence-ingested", {
+      accepted: result.accepted,
+      duplicates: result.duplicates,
+      headHash: result.evidence.headHash,
+    }, { source: metadata.source || "advanced-intelligence" });
+    return result;
+  }
+
+  async advancedForecast(options = {}) {
+    this.ensureInitialized();
+    const startedAt = Number(this.clock());
+    const result = this.advanced.forecast(options);
+    this.metrics.observe("oracle_v5_forecast_duration_ms", Number(this.clock()) - startedAt, {
+      players: result.forecasts.length,
+    });
+    this.metrics.increment("oracle_v5_forecasts_total", result.forecasts.length);
+    await this.eventStore.append("intelligence.forecast-created", {
+      digest: result.digest, week: result.week, asOf: result.asOf,
+      players: result.forecasts.map((row) => row.player.id),
+    }, { source: "advanced-intelligence" });
+    return result;
+  }
+
+  async advancedPortfolio(options = {}) {
+    this.ensureInitialized();
+    const startedAt = Number(this.clock());
+    const result = this.advanced.evaluate(options);
+    const elapsedMs = Number(this.clock()) - startedAt;
+    this.metrics.observe("oracle_v5_portfolio_duration_ms", elapsedMs, {
+      portfolios: result.decision.actions.length,
+    });
+    this.metrics.increment("oracle_v5_portfolio_evaluations_total", 1, { outcome: "success" });
+    await this.eventStore.append("intelligence.portfolio-evaluated", {
+      digest: result.simulation.digest,
+      preferredActionId: result.decision.preferredActionId,
+      portfolios: result.decision.actions.map((row) => row.id),
+      scenarios: result.simulation.scenarios,
+      elapsedMs,
+    }, { source: "advanced-intelligence" });
+    const preferred = result.decision.actions.find((row) => (
+      row.id === result.decision.preferredActionId
+    ));
+    const recommendation = await this.recordDecision(
+      "robust-portfolio-evaluation",
+      { portfolios: options.portfolios, week: result.simulation.week,
+        scenarios: result.simulation.scenarios, riskAversion: options.riskAversion },
+      result.decision,
+      { seed: result.simulation.seed, engine: "oracle-scenario-engine",
+        engineVersion: result.version, confidence: preferred?.probabilityBest,
+        objective: "robust-fantasy-points", route: "/api/v5/portfolio/evaluate",
+        requestId: options.requestId },
+    );
+    return { ...result, recommendation };
   }
 
   modelStatus() {
@@ -570,6 +676,7 @@ class PlatformControlPlane {
   async stop() {
     this.unsubscribeDataset?.();
     this.unsubscribeDataset = null;
+    await this.advanced?.stop?.();
     this.initialized = false;
     await this.eventStore.close();
   }
@@ -582,6 +689,7 @@ class PlatformControlPlane {
       championship: this.optimizer?.status(),
       models: this.models.status(),
       drift: this.drift.status(),
+      advancedIntelligence: this.advanced?.status(),
     });
   }
 }

@@ -1,14 +1,18 @@
 "use strict";
 
 const { createLineage, sha256 } = require("./lineage.js");
+const { validateObservation } = require("./evidence-store.js");
 
-const SCHEMA_REGISTRY_VERSION = "oracle-schemas-2026.1";
+const SCHEMA_REGISTRY_VERSION = "oracle-schemas-2026.2-v5";
 const SCHEMA_VERSIONS = Object.freeze({
   sourceRecord: "source-record/v1",
   playerEvent: "player-event/v1",
   leagueState: "league-state/v1",
   recommendation: "recommendation/v1",
   outcome: "decision-outcome/v1",
+  evidenceObservation: "evidence-observation/v1",
+  probabilisticForecast: "probabilistic-forecast/v1",
+  portfolioDecision: "portfolio-decision/v1",
 });
 
 function isPlainObject(value) {
@@ -130,12 +134,81 @@ function validateOutcome(value) {
   return { valid: errors.length === 0, errors };
 }
 
+
+function validateEvidenceObservation(value) {
+  const result = validateObservation(value);
+  return result.valid
+    ? { valid: true, errors: [] }
+    : { valid: false, errors: [result.error] };
+}
+
+function validateProbabilisticForecast(value) {
+  const errors = [];
+  if (!isPlainObject(value)) return { valid: false, errors: ["forecast: must be an object"] };
+  if (value.schemaVersion !== SCHEMA_VERSIONS.probabilisticForecast) {
+    errors.push(errorAt("schemaVersion", "unsupported probabilistic forecast schema"));
+  }
+  requireString(errors, value.player?.id, "player.id");
+  requireNumber(errors, value.week, "week", { minimum: 1, maximum: 18 });
+  requireNumber(errors, value.confidence, "confidence", { minimum: 0, maximum: 1 });
+  requireNumber(errors, value.availability?.probability, "availability.probability", {
+    minimum: 0, maximum: 1,
+  });
+  const distribution = value.distribution;
+  if (!isPlainObject(distribution)) {
+    errors.push(errorAt("distribution", "must be an object"));
+  } else {
+    ["mean", "standardDeviation", "p10", "p50", "p90", "cvar10"].forEach((field) => {
+      requireNumber(errors, distribution[field], `distribution.${field}`, { minimum: 0 });
+    });
+    if (distribution.p10 > distribution.p50 || distribution.p50 > distribution.p90) {
+      errors.push(errorAt("distribution", "quantiles must be ordered"));
+    }
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+
+function validatePortfolioDecision(value) {
+  const errors = [];
+  if (!isPlainObject(value)) return { valid: false, errors: ["decision: must be an object"] };
+  if (value.schemaVersion !== SCHEMA_VERSIONS.portfolioDecision) {
+    errors.push(errorAt("schemaVersion", "unsupported portfolio decision schema"));
+  }
+  requireString(errors, value.preferredActionId, "preferredActionId");
+  requireNumber(errors, value.stability, "stability", { minimum: 0, maximum: 1 });
+  if (!Array.isArray(value.actions) || !value.actions.length) {
+    errors.push(errorAt("actions", "must contain at least one action"));
+  } else {
+    const ids = new Set();
+    value.actions.forEach((action, index) => {
+      const prefix = `actions[${index}]`;
+      requireString(errors, action?.id, `${prefix}.id`);
+      if (ids.has(String(action?.id))) errors.push(errorAt(`${prefix}.id`, "duplicate"));
+      ids.add(String(action?.id));
+      requireNumber(errors, action?.probabilityBest, `${prefix}.probabilityBest`, {
+        minimum: 0, maximum: 1,
+      });
+      requireNumber(errors, action?.robustScore, `${prefix}.robustScore`);
+      if (!isPlainObject(action?.summary)) errors.push(errorAt(`${prefix}.summary`, "must be an object"));
+      if (!isPlainObject(action?.regret)) errors.push(errorAt(`${prefix}.regret`, "must be an object"));
+    });
+    if (!ids.has(String(value.preferredActionId))) {
+      errors.push(errorAt("preferredActionId", "does not match an action"));
+    }
+  }
+  return { valid: errors.length === 0, errors };
+}
+
 const VALIDATORS = Object.freeze({
   sourceRecord: validateSourceRecord,
   playerEvent: validatePlayerEvent,
   leagueState: validateLeagueState,
   recommendation: validateRecommendation,
   outcome: validateOutcome,
+  evidenceObservation: validateEvidenceObservation,
+  probabilisticForecast: validateProbabilisticForecast,
+  portfolioDecision: validatePortfolioDecision,
 });
 
 function validateRecord(schemaName, value) {
@@ -201,6 +274,9 @@ module.exports = {
   validateRecord,
   assertValid,
   normalizeSourceRecord,
+  validateEvidenceObservation,
+  validateProbabilisticForecast,
+  validatePortfolioDecision,
   registrySummary,
   isPlainObject,
 };

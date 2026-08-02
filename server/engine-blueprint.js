@@ -1,8 +1,16 @@
 "use strict";
 
-const ENGINE_BLUEPRINT_VERSION = "oracle-blueprint-2026.6-championship";
+const ENGINE_BLUEPRINT_VERSION = "oracle-blueprint-2026.7-probabilistic-v5";
 
 const LAYERS = [
+  {
+    id: "temporal-intelligence",
+    name: "Temporal evidence and probabilistic decision intelligence",
+    weight: 10,
+    status: "implemented",
+    available: ["append-only evidence ledger", "hash-chain verification", "as-of replay", "expiry and freshness decay", "source reliability", "conflict-aware reconciliation", "zero-inflated player distributions", "aleatoric and epistemic uncertainty", "paired robust portfolio evaluation", "probability of best", "expected regret", "risk sensitivity", "Pareto frontier", "value of information"],
+    missing: ["automatic licensed-feed acquisition", "causal treatment-effect estimation", "online posterior learning from manager actions"],
+  },
   {
     id: "opportunity",
     name: "Opportunity and expected fantasy points",
@@ -15,9 +23,9 @@ const LAYERS = [
     id: "tracking",
     name: "Player tracking, routes, and coverage",
     weight: 10,
-    status: "planned",
-    available: [],
-    missing: ["route geometry", "separation", "coverage shell", "defender leverage", "speed and acceleration"],
+    status: "partial",
+    available: ["versioned tracking evidence schema", "source reconciliation", "separation and route-win forecast effects"],
+    missing: ["connected route geometry feed", "coverage shell", "defender leverage", "speed and acceleration"],
   },
   {
     id: "coaching",
@@ -31,9 +39,9 @@ const LAYERS = [
     id: "line",
     name: "Offensive line and pass protection",
     weight: 7,
-    status: "planned",
-    available: [],
-    missing: ["pressure responsibility", "run-block win rate", "pass-block win rate", "line injuries"],
+    status: "partial",
+    available: ["versioned line-grade evidence schema", "pass-block and run-block forecast effects", "time-decayed source reconciliation"],
+    missing: ["connected pressure responsibility feed", "run-block win rate", "pass-block win rate", "line injuries"],
   },
 ];
 LAYERS.push(
@@ -57,9 +65,9 @@ LAYERS.push(
     id: "markets",
     name: "Betting and projection markets",
     weight: 8,
-    status: "planned",
-    available: [],
-    missing: ["team totals", "player props", "spread", "total", "line movement", "multi-book consensus"],
+    status: "partial",
+    available: ["player-prop evidence contract", "team total, game total, and spread contracts", "multi-source weighted consensus", "conflict-driven uncertainty widening"],
+    missing: ["connected sportsbook feeds", "line movement history", "vig removal", "multi-book identity resolution"],
   },
   {
     id: "matchup",
@@ -100,8 +108,8 @@ LAYERS.push(
     name: "Correlated simulation and optimization",
     weight: 8,
     status: "implemented",
-    available: ["draft Monte Carlo", "lineup assignment", "season distributions", "exact current standings", "points-for tiebreak context", "median games", "explicit playoff byes", "league playoffs", "CVaR", "team-aware starter correlation", "expected decision regret", "paired championship actions", "counterfactual reversal thresholds"],
-    missing: ["game-level latent factors", "automatic multi-lineup late-swap portfolio optimization"],
+    available: ["draft Monte Carlo", "lineup assignment", "season distributions", "exact current standings", "points-for tiebreak context", "median games", "explicit playoff byes", "league playoffs", "CVaR", "team-aware starter correlation", "expected decision regret", "paired championship actions", "counterfactual reversal thresholds", "game and team latent factors", "position-specific correlation", "availability mixtures", "order-independent seeded scenarios", "robust portfolio utility", "probability-of-best ranking", "Pareto frontiers", "risk-aversion sensitivity"],
+    missing: ["automatic multi-lineup late-swap portfolio optimization", "play-level drive simulation", "learned copula calibration"],
   },
 );
 LAYERS.push(
@@ -118,8 +126,8 @@ LAYERS.push(
     name: "Explainability and counterfactual decisions",
     weight: 5,
     status: "partial",
-    available: ["VONA reasons", "coaching drivers", "lineup alternatives", "trade deltas", "FAAB ranges", "uncertainty decomposition", "player archetypes", "expected regret", "breakout and bust asymmetry"],
-    missing: ["trained-model SHAP attribution", "interactive what-if editor", "causal attribution"],
+    available: ["VONA reasons", "coaching drivers", "lineup alternatives", "trade deltas", "FAAB ranges", "uncertainty decomposition", "player archetypes", "expected regret", "breakout and bust asymmetry", "evidence provenance", "source conflict", "family-capped contributions", "value-of-information ranking", "counterfactual evidence overlays"],
+    missing: ["trained-model SHAP attribution", "causal attribution"],
   },
 );
 

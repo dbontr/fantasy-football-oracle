@@ -51,3 +51,15 @@ test("production smoke rejects non-strict or native-unavailable health", () => {
     platform: { artifacts: { strict: false, valid: true } },
   }, { requireStrict: true }), /native engine/i);
 });
+
+test("production smoke rejects an invalid advanced evidence chain", () => {
+  assert.throws(() => validateReadiness({
+    ready: true,
+    status: "ready",
+    dataReady: true,
+    eventChainValid: true,
+    advancedReady: true,
+    advancedEvidenceValid: false,
+    failures: [],
+  }), /advanced evidence chain/i);
+});

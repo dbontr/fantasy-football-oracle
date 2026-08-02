@@ -1,12 +1,15 @@
 "use strict";
 
-const CACHE_NAME = "fantasy-football-oracle-v11-championship";
+const CACHE_NAME = "fantasy-football-oracle-v12-probabilistic-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app-core.js",
   "./app.js",
+  "./lab.html",
+  "./lab.css",
+  "./lab.js",
   "./simulation-worker.js",
   "./manifest.webmanifest",
   "./data/players-2026.json",
