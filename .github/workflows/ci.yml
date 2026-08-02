@@ -1,0 +1,113 @@
+name: Verify championship architecture
+
+"on":
+  push:
+    branches:
+      - main
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify source, native engine, tests, and artifacts
+        run: npm run verify:offline
+
+      - name: Audit production dependencies
+        run: npm audit --audit-level=high
+
+      - name: Create a recovery package
+        run: node scripts/backup-oracle.js --out "$RUNNER_TEMP/oracle-recovery"
+
+      - name: Verify and restore the recovery package
+        shell: bash
+        run: |
+          PACKAGE="$(find "$RUNNER_TEMP/oracle-recovery" -mindepth 1 -maxdepth 1 -type d -name 'oracle-*' | head -n 1)"
+          test -n "$PACKAGE"
+          node scripts/verify-backup.js --package "$PACKAGE"
+          node scripts/disaster-recovery-drill.js --package "$PACKAGE" --skip-install
+
+      - name: Upload integrity evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-integrity-${{ github.sha }}
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            data/artifact-manifest.json
+            MANIFEST.sha256
+            artifacts/sbom.cdx.json
+
+  verify-windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Locate or install a C++20 compiler
+        shell: pwsh
+        run: |
+          $compiler = @(
+            "C:\msys64\ucrt64\bin\g++.exe"
+            "C:\msys64\mingw64\bin\g++.exe"
+            (Get-Command g++.exe -ErrorAction SilentlyContinue).Source
+          ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not $compiler) {
+            choco install mingw --no-progress -y
+            $compiler = (Get-Command g++.exe -ErrorAction Stop).Source
+          }
+          "CXX=$compiler" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          & $compiler --version
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify Windows source, native engine, tests, and artifacts
+        run: npm run verify:offline
+      - name: Audit production dependencies
+        run: npm audit --audit-level=high
+      - name: Verify Windows recovery package
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "oracle-recovery"
+          node scripts/backup-oracle.js --out $out
+          $package = Get-ChildItem $out -Directory -Filter "oracle-*" |
+            Select-Object -First 1
+          if (-not $package) {
+            throw "Recovery package was not created."
+          }
+          node scripts/verify-backup.js --package $package.FullName
+          node scripts/disaster-recovery-drill.js --package $package.FullName --skip-install
