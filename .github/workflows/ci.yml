@@ -111,3 +111,67 @@ jobs:
           }
           node scripts/verify-backup.js --package $package.FullName
           node scripts/disaster-recovery-drill.js --package $package.FullName --skip-install
+
+  verify-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Build production image
+        run: docker build --pull --tag oracle-ci:${{ github.sha }} .
+
+      - name: Start hardened production container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker volume create oracle-ci-runtime
+          docker run --detach \
+            --name oracle-ci \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            --mount source=oracle-ci-runtime,target=/app/data/runtime \
+            --publish 127.0.0.1:8787:8787 \
+            oracle-ci:${{ github.sha }}
+
+      - name: Wait for readiness and run strict smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            HEALTH="$(docker inspect --format '{{.State.Health.Status}}' oracle-ci)"
+            if [ "$HEALTH" = "healthy" ]; then
+              break
+            fi
+            if [ "$HEALTH" = "unhealthy" ]; then
+              docker logs oracle-ci
+              exit 1
+            fi
+            sleep 2
+          done
+          test "$(docker inspect --format '{{.State.Health.Status}}' oracle-ci)" = "healthy"
+          node scripts/smoke-production.js --base http://127.0.0.1:8787 --strict
+          test "$(docker inspect --format '{{.Config.User}}' oracle-ci)" = "node"
+          test "$(docker exec oracle-ci id -u)" != "0"
+          docker exec oracle-ci test ! -e /app/tests
+          docker exec oracle-ci test ! -e /app/docs
+          docker exec oracle-ci test ! -e /app/native/src
+          docker exec oracle-ci test ! -e /app/native/build.js
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs oracle-ci || true
+
+      - name: Remove test container
+        if: always()
+        run: |
+          docker rm -f oracle-ci || true
+          docker volume rm oracle-ci-runtime || true
