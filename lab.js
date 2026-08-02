@@ -16,6 +16,8 @@ const state = {
 const elements = {};
 const ids = [
   "lab-health", "evidence-count", "chain-status", "feature-count", "evidence-head",
+  "calibration-state", "calibration-detail", "calibration-gain", "journal-targets",
+  "journal-detail", "source-state", "source-detail", "source-attribution",
   "week-select", "scenario-select", "risk-range", "risk-output", "seed-input",
   "run-forecast-button", "player-search", "position-tabs", "player-list",
   "selection-count", "forecast-status", "forecast-empty", "forecast-list",
@@ -476,6 +478,31 @@ async function loadApplication() {
   elements["chain-status"].textContent = status.evidence?.valid ? "Verified" : "Unsafe";
   elements["feature-count"].textContent = number(status.catalog?.features).toLocaleString();
   elements["evidence-head"].textContent = status.evidence?.headHash || "not available";
+  const free = status.freeIntelligence || {};
+  const calibration = free.calibration || {};
+  const evaluation = calibration.validation?.evaluation || {};
+  elements["calibration-state"].textContent = calibration.approved ? "Approved" : "Fallback";
+  elements["calibration-state"].classList.toggle("is-approved", calibration.approved === true);
+  elements["calibration-state"].classList.toggle("is-warning", calibration.approved !== true);
+  elements["calibration-detail"].textContent = calibration.approved
+    ? `Holdout ${calibration.holdoutSeason} · ${calibration.digest?.slice(0, 8) || "verified"}`
+    : "Raw distributions remain active";
+  const wisGain = number(evaluation.improvement?.wis, 0);
+  elements["calibration-gain"].textContent = wisGain > 0 ? `+${wisGain.toFixed(3)}` : wisGain.toFixed(3);
+  elements["journal-targets"].textContent = number(free.journal?.trainingTargets).toLocaleString();
+  elements["journal-detail"].textContent = `${number(free.journal?.forecasts).toLocaleString()} forecasts · ${number(free.journal?.settlements).toLocaleString()} settled`;
+  const enabledSources = free.sync?.enabledSources || [];
+  const sourceFailures = number(free.sync?.last?.failures);
+  elements["source-state"].textContent = enabledSources.length
+    ? sourceFailures ? "Degraded" : "Enabled"
+    : "Offline";
+  elements["source-state"].classList.toggle("is-approved", enabledSources.length > 0 && sourceFailures === 0);
+  elements["source-state"].classList.toggle("is-warning", sourceFailures > 0);
+  elements["source-detail"].textContent = enabledSources.length
+    ? enabledSources.join(" · ")
+    : "optional synchronization disabled";
+  const attributions = free.sources?.catalog?.sources?.map((row) => row.attribution) || [];
+  elements["source-attribution"].textContent = attributions.join(" · ") || "No public feed attribution loaded";
   setHealth(
     status.initialized && status.evidence?.valid ? "ready" : "error",
     status.initialized && status.evidence?.valid

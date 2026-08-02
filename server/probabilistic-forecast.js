@@ -207,6 +207,10 @@ function contributionFor(feature, resolved, player, baseline) {
       impact = (value - baseline.mean) * 0.65;
       label = "player market consensus";
       break;
+    case "market.roster_momentum":
+      impact = value * baseline.mean * 0.025;
+      label = "public roster momentum";
+      break;
     case "market.team_total":
       impact = (value - 23.5) * baseline.mean * 0.015;
       label = "team scoring environment";
@@ -247,6 +251,10 @@ function contributionFor(feature, resolved, player, baseline) {
       label = "expected opportunity volume";
       break;
     }
+    case "role.depth_chart_order":
+      impact = clamp((2.2 - value) / 2.2, -0.7, 0.55) * baseline.mean * 0.08;
+      label = "depth-chart order";
+      break;
     case "efficiency.expected_points_per_opportunity": {
       const opportunities = Math.max(1, finite(player.opportunityContext?.weightedOpportunityPerGame, 14));
       const prior = baseline.mean / opportunities;
@@ -370,6 +378,12 @@ function evidenceAuthority(resolved) {
   return Math.max(clamp(resolved?.confidence, 0, 1), provenanceAuthority);
 }
 
+function practiceAvailability(value) {
+  return ({ full: 0.99, limited: 0.88, dnp: 0.62, other: 0.9 })[
+    String(value || "").toLowerCase()
+  ] ?? null;
+}
+
 function resolveAvailability(baseline, evidence) {
   let probability = baseline.availability;
   let confidence = baseline.reliability;
@@ -385,6 +399,15 @@ function resolveAvailability(baseline, evidence) {
       value: active.value,
       confidence: active.confidence,
     });
+  }
+  const practice = evidence["health.practice_participation"];
+  const practiced = practice?.available ? practiceAvailability(practice.value) : null;
+  if (practiced !== null) {
+    const authority = evidenceAuthority(practice);
+    const weight = clamp(authority * 0.45, 0, 0.55);
+    probability = probability * (1 - weight) + practiced * weight;
+    confidence = Math.max(confidence, authority * 0.8);
+    drivers.push({ feature: "health.practice_participation", value: practice.value, confidence: practice.confidence });
   }
   const designation = evidence["availability.designation"];
   const designated = designation?.available ? designationAvailability(designation.value) : null;
@@ -662,6 +685,7 @@ module.exports = {
   mixtureMoments,
   mixtureQuantile,
   normalCdf,
+  practiceAvailability,
   resolveAvailability,
   resolveEvidence,
   weeklyBaseline,

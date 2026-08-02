@@ -12,6 +12,7 @@ const {
 } = require("./scenario-engine.js");
 const { rankInformationNeeds } = require("./robust-decision.js");
 const { sha256 } = require("./lineage.js");
+const { scheduledGame } = require("./game-identity.js");
 
 const ADVANCED_INTELLIGENCE_VERSION = "oracle-intelligence-v5-2026.1";
 
@@ -33,12 +34,22 @@ class AdvancedIntelligence {
     this.maxForecastPlayers = Math.max(1, Number(options.maxForecastPlayers || 64));
     this.maxEvidenceBatch = Math.max(1, Number(options.maxEvidenceBatch || 500));
     this.maxScenarios = Math.min(50000, Math.max(100, Number(options.maxScenarios || 50000)));
+    this.forecastTransformer = typeof options.forecastTransformer === "function"
+      ? options.forecastTransformer
+      : null;
     this.evidence = options.evidenceStore || new EvidenceStore({
       filePath: path.join(this.runtimeDir, "evidence.jsonl"),
       clock: this.clock,
       maxObservations: options.maxObservations || 250_000,
     });
     this.initialized = false;
+  }
+
+  setForecastTransformer(transformer) {
+    if (transformer !== null && typeof transformer !== "function") {
+      throw new TypeError("Forecast transformer must be a function or null");
+    }
+    this.forecastTransformer = transformer;
   }
 
   ensureInitialized() {
@@ -203,14 +214,19 @@ class AdvancedIntelligence {
     );
     const week = clampInteger(options.week, 1, 1, 18);
     const asOf = new Date(options.asOf || this.clock()).toISOString();
-    const forecasts = players.map((player) => forecastPlayer(player, this.evidence, {
+    const rawForecasts = players.map((player) => forecastPlayer(player, this.evidence, {
       week,
       asOf,
       additionalObservations,
-      gameId: options.gameIds?.[String(player.id)] || null,
+      gameId: options.gameIds?.[String(player.id)]
+        || scheduledGame(this.dataset(), player.team, week)?.id
+        || null,
       bustThreshold: options.bustThresholds?.[String(player.id)],
       ceilingThreshold: options.ceilingThresholds?.[String(player.id)],
     }));
+    const forecasts = this.forecastTransformer
+      ? rawForecasts.map((forecast) => this.forecastTransformer(forecast, { week, asOf }))
+      : rawForecasts;
     const informationNeeds = rankInformationNeeds(forecasts, {
       limit: clampInteger(options.informationLimit, 12, 1, 50),
     });

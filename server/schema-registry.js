@@ -2,8 +2,10 @@
 
 const { createLineage, sha256 } = require("./lineage.js");
 const { validateObservation } = require("./evidence-store.js");
+const { validateCalibrationDocument } = require("./free-calibration-loader.js");
+const { validateRecord: validateForecastJournalRecord } = require("./forecast-journal.js");
 
-const SCHEMA_REGISTRY_VERSION = "oracle-schemas-2026.2-v5";
+const SCHEMA_REGISTRY_VERSION = "oracle-schemas-2026.3-v5.1";
 const SCHEMA_VERSIONS = Object.freeze({
   sourceRecord: "source-record/v1",
   playerEvent: "player-event/v1",
@@ -13,6 +15,8 @@ const SCHEMA_VERSIONS = Object.freeze({
   evidenceObservation: "evidence-observation/v1",
   probabilisticForecast: "probabilistic-forecast/v1",
   portfolioDecision: "portfolio-decision/v1",
+  probabilisticCalibration: "probabilistic-calibration/v1",
+  forecastJournalRecord: "forecast-journal-record/v1",
 });
 
 function isPlainObject(value) {
@@ -200,6 +204,21 @@ function validatePortfolioDecision(value) {
   return { valid: errors.length === 0, errors };
 }
 
+
+function validateProbabilisticCalibration(value) {
+  const result = validateCalibrationDocument(value);
+  return result.valid
+    ? { valid: true, errors: [] }
+    : { valid: false, errors: [result.error] };
+}
+
+function validateForecastJournal(value) {
+  const result = validateForecastJournalRecord(value);
+  return result.valid
+    ? { valid: true, errors: [] }
+    : { valid: false, errors: [result.error] };
+}
+
 const VALIDATORS = Object.freeze({
   sourceRecord: validateSourceRecord,
   playerEvent: validatePlayerEvent,
@@ -209,6 +228,8 @@ const VALIDATORS = Object.freeze({
   evidenceObservation: validateEvidenceObservation,
   probabilisticForecast: validateProbabilisticForecast,
   portfolioDecision: validatePortfolioDecision,
+  probabilisticCalibration: validateProbabilisticCalibration,
+  forecastJournalRecord: validateForecastJournal,
 });
 
 function validateRecord(schemaName, value) {
@@ -277,6 +298,8 @@ module.exports = {
   validateEvidenceObservation,
   validateProbabilisticForecast,
   validatePortfolioDecision,
+  validateProbabilisticCalibration,
+  validateForecastJournal,
   registrySummary,
   isPlainObject,
 };

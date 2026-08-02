@@ -48,6 +48,8 @@ test("readiness is healthy when required dependencies are healthy", () => {
     eventChainValid: true,
     advancedReady: true,
     advancedEvidenceValid: true,
+    freeReady: null,
+    freeJournalValid: null,
     failures: [],
   });
 });
@@ -119,4 +121,16 @@ test("readiness fails when the advanced evidence chain is invalid", () => {
   assert.equal(result.advancedReady, true);
   assert.equal(result.advancedEvidenceValid, false);
   assert.ok(result.failures.includes("advanced-evidence-invalid"));
+});
+
+test("readiness fails when the free forecast journal chain is invalid", () => {
+  const result = readinessSnapshot(services({
+    controlPlane: {
+      free: { status: () => ({ initialized: true, journal: { valid: false } }) },
+    },
+  }));
+  assert.equal(result.ready, false);
+  assert.equal(result.freeReady, true);
+  assert.equal(result.freeJournalValid, false);
+  assert.ok(result.failures.includes("free-journal-invalid"));
 });

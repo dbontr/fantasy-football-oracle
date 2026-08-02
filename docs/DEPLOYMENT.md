@@ -47,6 +47,22 @@ ORACLE_MAX_ADVANCED_SCENARIOS=50000
 
 Persistent evidence ingestion and raw evidence search are administrative routes. Public forecast and what-if requests cannot mutate the ledger. Back up the complete runtime directory so the evidence chain, event store, snapshots, registry, drift history, and decision ledger come from one recovery point.
 
+## Optional free intelligence
+
+Free-source synchronization is disabled by default and startup remains offline. To enable selected providers:
+
+```text
+ORACLE_FREE_SOURCES=sleeper,nflverse
+ORACLE_FREE_SYNC_ENABLED=true
+ORACLE_FREE_SYNC_INTERVAL_MS=21600000
+ORACLE_SLEEPER_LEAGUE_ID=
+ORACLE_OPEN_METEO_NONCOMMERCIAL_ACK=false
+```
+
+Keep Open-Meteo disabled unless the deployment satisfies its hosted free tier's non-commercial restriction and the operator explicitly sets the acknowledgement. Provider failure degrades only the optional sync component; it does not fail readiness. The local forecast journal and calibration digest do participate in integrity checks.
+
+Persist `ORACLE_FREE_RUNTIME_DIR` with the rest of Oracle runtime state. It contains the forecast journal, runtime calibration, and source cache. Raw cache files may be discarded and refetched; the journal and runtime calibration must be restored from the same recovery point.
+
 ## Native engine settings
 
 ```text

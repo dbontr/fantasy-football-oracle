@@ -1,0 +1,167 @@
+{
+  "version": "oracle-free-walk-forward-2026.1",
+  "generatedAt": "2026-08-02T22:13:53.196Z",
+  "digest": "db88a07c7a5d54e71e1a5f04ef60a1b94da1abdc83eb27411be18e79e191bcfa",
+  "seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "trainingSeasons": [
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "holdoutSeason": 2025,
+  "outcomes": 32056,
+  "forecasts": 31682,
+  "coverage": 0.9883329173945595,
+  "overall": {
+    "samples": 31682,
+    "mae": 4.6031,
+    "rmse": 6.1274,
+    "bias": 0.4534,
+    "brier": 0.0701,
+    "logLoss": 0.2412,
+    "wis": 2.7492,
+    "meanPinball": 1.5136,
+    "interval80Coverage": 0.8885,
+    "interval80Width": 15.1992
+  },
+  "training": {
+    "samples": 25119,
+    "mae": 4.6402,
+    "rmse": 6.1543,
+    "bias": 0.4267,
+    "brier": 0.0689,
+    "logLoss": 0.2389,
+    "wis": 2.7703,
+    "meanPinball": 1.5251,
+    "interval80Coverage": 0.8884,
+    "interval80Width": 15.3009
+  },
+  "holdout": {
+    "samples": 6563,
+    "mae": 4.4608,
+    "rmse": 6.023,
+    "bias": 0.5556,
+    "brier": 0.0746,
+    "logLoss": 0.2498,
+    "wis": 2.6685,
+    "meanPinball": 1.4697,
+    "interval80Coverage": 0.8888,
+    "interval80Width": 14.8101
+  },
+  "calibration": {
+    "version": "oracle-probabilistic-calibration-2026.1",
+    "digest": "2131ad6329c9057802a502940204274ed3d208dc7f906563eee26defb8d959f8",
+    "approved": true,
+    "validation": {
+      "leakageSafe": true,
+      "holdoutSeason": 2025,
+      "checks": {
+        "holdoutSamples": true,
+        "wis": true,
+        "rmse": true,
+        "brier": true,
+        "coverage": true
+      },
+      "thresholds": {
+        "minimumHoldoutSamples": 500,
+        "minimumWisImprovement": 0,
+        "maximumRmseRegression": 0.08,
+        "maximumBrierRegression": 0.015,
+        "coverageMinimum": 0.65,
+        "coverageMaximum": 0.94
+      },
+      "evaluation": {
+        "samples": 6563,
+        "before": {
+          "samples": 6563,
+          "mae": 4.46083,
+          "rmse": 6.023,
+          "bias": 0.55562,
+          "brier": 0.07458,
+          "logLoss": 0.24981,
+          "wis": 2.66849,
+          "meanPinball": 1.46966,
+          "interval80Coverage": 0.88877,
+          "interval80Width": 14.81012
+        },
+        "after": {
+          "samples": 6563,
+          "mae": 4.2564,
+          "rmse": 5.97912,
+          "bias": 0.20005,
+          "brier": 0.06693,
+          "logLoss": 0.22795,
+          "wis": 2.59695,
+          "meanPinball": 1.43822,
+          "interval80Coverage": 0.8749,
+          "interval80Width": 13.42518
+        },
+        "improvement": {
+          "mae": 0.20443,
+          "rmse": 0.04387,
+          "brier": 0.00764,
+          "logLoss": 0.02186,
+          "wis": 0.07154,
+          "meanPinball": 0.03144,
+          "interval80Coverage": -0.01387
+        }
+      }
+    }
+  },
+  "source": {
+    "provider": "nflverse",
+    "license": "CC-BY-4.0",
+    "repository": "https://github.com/nflverse/nflverse-data",
+    "metadata": {
+      "2021": {
+        "rows": 6408,
+        "digest": "63cc3e2400307ee8c1fc5c6283c6c4223471111c0f4aedecd60c8db75c96a06d",
+        "fetchedAt": "2026-08-02T22:13:50.656Z",
+        "stale": false
+      },
+      "2022": {
+        "rows": 6353,
+        "digest": "9ee25c230db72c8b9cffc3ad3d218482c3ef53c8a06eadaee85f9e8163552f28",
+        "fetchedAt": "2026-08-02T22:13:51.536Z",
+        "stale": false
+      },
+      "2023": {
+        "rows": 6340,
+        "digest": "ee65341b2f28cfbf48df85571bf512ec62b281043623e7ffed2926e5569126b3",
+        "fetchedAt": "2026-08-02T22:13:52.241Z",
+        "stale": false
+      },
+      "2024": {
+        "rows": 6392,
+        "digest": "db6379707a8d520f7fb9a90eeacd8a98ec3d5cdca8b98e0943cab5a250d91a97",
+        "fetchedAt": "2026-08-02T22:12:58.050Z",
+        "stale": false
+      },
+      "2025": {
+        "rows": 6563,
+        "digest": "40b67b296fda02c7f628741d4aa471208352dd42fb670d4854e7ba95295af1a6",
+        "fetchedAt": "2026-08-02T22:12:58.442Z",
+        "stale": false
+      }
+    },
+    "playerIdentityDigest": "496c9e9c50e4bc0eba03c1c9a091189b7bb79372a1edf4d1e441a26cbacadd6d"
+  },
+  "leakageControls": [
+    "Each player-week forecast is generated before any outcome from that week is appended.",
+    "The final season is excluded from calibration fitting and used only as a holdout.",
+    "Only prior player and position outcomes are included in model inputs.",
+    "Historical free-source outcomes are separated from the 2026 live identity requirement."
+  ],
+  "limitations": [
+    "The walk-forward bootstrap uses nflverse fantasy outcomes and opportunity counts, not historical betting markets or injury reports.",
+    "Players absent from weekly source rows may be underrepresented in availability calibration.",
+    "The bootstrap is an initialization prior; production forecast-journal outcomes should supersede it as samples accumulate."
+  ]
+}

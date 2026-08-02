@@ -38,6 +38,16 @@ Use `POST /api/v5/evidence` only for durable observations from an identified sou
 
 During recovery, stop every Oracle instance and restore the evidence ledger with the event store and decision history from one verified package. Run strict readiness and production smoke before accepting traffic.
 
+## Free-source and calibration operations
+
+`GET /api/v5/free-sources` reports enabled providers, source terms, cache state, last synchronization, identity conflicts, journal integrity, and calibration status. Network synchronization occurs only when providers are enabled and either the scheduler or the administrator route invokes it.
+
+Use `POST /api/v5/free-sources/sync` for a bounded manual refresh. A failure from one provider does not cancel successful providers. Sleeper data may be useful before the regular season; nflverse weekly settlement begins after completed games. Open-Meteo should be called only inside its forecast horizon.
+
+`GET /api/v5/calibration/report` exposes the approved bootstrap holdout scorecard and accumulated production journal scores. `POST /api/v5/calibration/rebuild` evaluates a production-journal challenger and writes it only when every holdout gate passes. Rejected candidates remain event records and do not replace the active model.
+
+During recovery, restore the free forecast journal with the event store, evidence ledger, and runtime calibration. Readiness fails with `free-journal-invalid` when the journal hash chain cannot be trusted. Optional source outages do not fail readiness.
+
 ## Data refresh
 
 Every live source request uses a deadline, bounded retry count, exponential backoff, and attempt telemetry. Required ESPN player and schedule sources fail the refresh when unavailable. Sleeper and ESPN News are optional; their absence creates a degraded snapshot rather than fabricated values.

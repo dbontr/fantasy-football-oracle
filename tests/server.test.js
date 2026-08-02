@@ -207,7 +207,7 @@ test("full-stack server exposes health, data, static shell, and compute routes",
     assert.equal(payload.historical.draftPolicy.marketWeight, 0.72);
     assert.equal(payload.healthIntelligence.version, "test-health");
     assert.equal(payload.healthIntelligence.affectedPlayers, 1);
-    assert.equal(payload.platform.version, "oracle-platform-2026.2-v5");
+    assert.equal(payload.platform.version, "oracle-platform-2026.3-v5.1");
     assert.equal(payload.platform.eventStore.filePath, undefined);
     assert.equal(payload.platform.snapshots.directory, undefined);
     assert.equal(payload.platform.models.domains.projection.champion, "oracle-ensemble-2026.5-health");
@@ -275,7 +275,7 @@ test("full-stack server exposes health, data, static shell, and compute routes",
     const status = await server.inject({ method: "GET", url: "/api/platform/status" });
     assert.equal(status.statusCode, 200);
     const platform = status.json();
-    assert.equal(platform.version, "oracle-platform-2026.2-v5");
+    assert.equal(platform.version, "oracle-platform-2026.3-v5.1");
     assert.equal(platform.eventStore.filePath, undefined);
     assert.equal(platform.snapshots.directory, undefined);
     assert.match(platform.buildFingerprint, /^[a-f0-9]{64}$/);
@@ -372,7 +372,7 @@ test("full-stack server exposes health, data, static shell, and compute routes",
     const response = await server.inject({ method: "GET", url: "/api/model/blueprint" });
     assert.equal(response.statusCode, 200);
     const payload = response.json();
-    assert.equal(payload.layers.length, 15);
+    assert.equal(payload.layers.length, 16);
     assert.ok(payload.readinessScore > 0 && payload.readinessScore < 100);
     assert.equal(payload.layers.find((layer) => layer.id === "coaching").status, "implemented");
   });

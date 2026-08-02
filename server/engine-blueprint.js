@@ -1,6 +1,6 @@
 "use strict";
 
-const ENGINE_BLUEPRINT_VERSION = "oracle-blueprint-2026.7-probabilistic-v5";
+const ENGINE_BLUEPRINT_VERSION = "oracle-blueprint-2026.8-free-learning-v5.1";
 
 const LAYERS = [
   {
@@ -10,6 +10,14 @@ const LAYERS = [
     status: "implemented",
     available: ["append-only evidence ledger", "hash-chain verification", "as-of replay", "expiry and freshness decay", "source reliability", "conflict-aware reconciliation", "zero-inflated player distributions", "aleatoric and epistemic uncertainty", "paired robust portfolio evaluation", "probability of best", "expected regret", "risk sensitivity", "Pareto frontier", "value of information"],
     missing: ["automatic licensed-feed acquisition", "causal treatment-effect estimation", "online posterior learning from manager actions"],
+  },
+  {
+    id: "free-learning",
+    name: "Zero-cost public evidence and continuous probabilistic learning",
+    weight: 9,
+    status: "implemented",
+    available: ["offline-by-default public connectors", "conditional disk cache", "origin and redirect allowlists", "response byte limits", "stale-if-error", "source circuit breakers", "Sleeper identity and trend evidence", "nflverse identity and weekly outcomes", "opt-in Open-Meteo game weather", "append-only forecast journal", "proper probabilistic scores", "position-aware calibration", "final-season holdout gate", "production-journal challenger promotion"],
+    missing: ["free play-level route geometry", "free historical injury archive", "multi-season production journal outcomes", "automated causal calibration"],
   },
   {
     id: "opportunity",
@@ -58,8 +66,8 @@ LAYERS.push(
     name: "Weather, venue, and game environment",
     weight: 6,
     status: "partial",
-    available: ["home or away", "indoor flag", "kickoff", "bye week"],
-    missing: ["live wind", "precipitation", "temperature", "field surface", "travel and rest"],
+    available: ["home or away", "canonical game ids", "venue map", "indoor and roofed venue override", "kickoff", "bye week", "opt-in Open-Meteo wind", "opt-in Open-Meteo precipitation", "opt-in Open-Meteo temperature"],
+    missing: ["commercial weather service fallback", "field surface", "travel and rest", "roof-open status"],
   },
   {
     id: "markets",
@@ -118,7 +126,7 @@ LAYERS.push(
     name: "Backtesting, calibration, and drift detection",
     weight: 8,
     status: "implemented",
-    available: ["deterministic parity tests", "bounds tests", "model versioning", "source lineage", "artifact checksums", "multi-season leakage-safe replay", "walk-forward policy tuning", "untouched holdout evaluation", "mandatory champion-challenger gates", "instant model rollback", "historical trade and waiver calibration", "historical value curves", "coverage diagnostics", "season-held-out ridge selection", "Brier score", "calibration bins", "numeric MAE and RMSE", "persistent outcome drift monitoring"],
+    available: ["deterministic parity tests", "bounds tests", "model versioning", "source lineage", "artifact checksums", "multi-season leakage-safe replay", "walk-forward policy tuning", "untouched holdout evaluation", "mandatory champion-challenger gates", "instant model rollback", "historical trade and waiver calibration", "historical value curves", "coverage diagnostics", "season-held-out ridge selection", "Brier score", "log loss", "pinball loss", "weighted interval score", "calibration bins", "numeric MAE and RMSE", "80-percent interval coverage", "forecast journal replay", "latest pre-outcome snapshot selection", "persistent outcome drift monitoring"],
     missing: ["real manager acceptance calibration", "fully automated causal drift diagnosis"],
   },
   {

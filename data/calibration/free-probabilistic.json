@@ -1,0 +1,627 @@
+{
+  "version": "oracle-probabilistic-calibration-2026.1",
+  "schemaVersion": "probabilistic-calibration/v1",
+  "generatedAt": "2026-08-02T22:13:53.196Z",
+  "source": "nflverse-weekly-stats-walk-forward",
+  "approved": true,
+  "minimumSamples": 80,
+  "trainingSeasons": [
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "holdoutSeason": 2025,
+  "groups": {
+    "all": {
+      "samples": 25119,
+      "eligible": true,
+      "minimumSamples": 80,
+      "bias": 0.42673,
+      "uncertaintyScale": 0.92705,
+      "residualQuantiles": {
+        "p10": -6.48963,
+        "p25": -4.10155,
+        "p50": -1.63636,
+        "p75": 2.19248,
+        "p90": 7.9717
+      },
+      "standardizedQuantiles": {
+        "p10": -0.93938,
+        "p25": -0.66173,
+        "p50": -0.37319,
+        "p75": 0.33269,
+        "p90": 1.16833
+      },
+      "availabilityBins": [
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "samples": 1291,
+          "meanPrediction": 0.19565,
+          "observedRate": 0.00077,
+          "calibratedRate": 0.00135
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "samples": 350,
+          "meanPrediction": 0.24171,
+          "observedRate": 0.01429,
+          "calibratedRate": 0.01761
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "samples": 283,
+          "meanPrediction": 0.34411,
+          "observedRate": 0.11307,
+          "calibratedRate": 0.11719
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "samples": 329,
+          "meanPrediction": 0.43716,
+          "observedRate": 0.27052,
+          "calibratedRate": 0.2732
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "samples": 611,
+          "meanPrediction": 0.54127,
+          "observedRate": 0.34043,
+          "calibratedRate": 0.34213
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "samples": 723,
+          "meanPrediction": 0.65291,
+          "observedRate": 0.52282,
+          "calibratedRate": 0.5237
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "samples": 1221,
+          "meanPrediction": 0.75284,
+          "observedRate": 0.638,
+          "calibratedRate": 0.63846
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "samples": 2253,
+          "meanPrediction": 0.85351,
+          "observedRate": 0.82823,
+          "calibratedRate": 0.82828
+        },
+        {
+          "lower": 0.9,
+          "upper": 1,
+          "samples": 18058,
+          "meanPrediction": 0.96113,
+          "observedRate": 0.96578,
+          "calibratedRate": 0.96577
+        }
+      ],
+      "metrics": {
+        "samples": 25119,
+        "mae": 4.64023,
+        "rmse": 6.15433,
+        "bias": 0.42673,
+        "brier": 0.06891,
+        "logLoss": 0.2389,
+        "wis": 2.77028,
+        "meanPinball": 1.52508,
+        "interval80Coverage": 0.88841,
+        "interval80Width": 15.3009
+      }
+    },
+    "QB": {
+      "samples": 2577,
+      "eligible": true,
+      "minimumSamples": 80,
+      "bias": 0.16562,
+      "uncertaintyScale": 0.95227,
+      "residualQuantiles": {
+        "p10": -10.04271,
+        "p25": -5.96573,
+        "p50": -0.58104,
+        "p75": 5.01575,
+        "p90": 10.32912
+      },
+      "standardizedQuantiles": {
+        "p10": -1.19252,
+        "p25": -0.73731,
+        "p50": -0.06666,
+        "p75": 0.60957,
+        "p90": 1.29809
+      },
+      "availabilityBins": [
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "samples": 2,
+          "meanPrediction": 0.85682,
+          "observedRate": 1,
+          "calibratedRate": 0.89286
+        },
+        {
+          "lower": 0.9,
+          "upper": 1,
+          "samples": 2575,
+          "meanPrediction": 0.96366,
+          "observedRate": 0.99883,
+          "calibratedRate": 0.99874
+        }
+      ],
+      "metrics": {
+        "samples": 2577,
+        "mae": 6.34606,
+        "rmse": 7.84227,
+        "bias": 0.16562,
+        "brier": 0.0028,
+        "logLoss": 0.04117,
+        "wis": 3.89449,
+        "meanPinball": 2.16233,
+        "interval80Coverage": 0.8021,
+        "interval80Width": 20.92373
+      }
+    },
+    "K": {
+      "samples": 2141,
+      "eligible": true,
+      "minimumSamples": 80,
+      "bias": 2.26216,
+      "uncertaintyScale": 0.65419,
+      "residualQuantiles": {
+        "p10": -4,
+        "p25": -2.4,
+        "p50": -1.56522,
+        "p75": -1.56522,
+        "p90": -1.56522
+      },
+      "standardizedQuantiles": {
+        "p10": -0.8165,
+        "p25": -0.56195,
+        "p50": -0.43077,
+        "p75": -0.43077,
+        "p90": -0.43077
+      },
+      "availabilityBins": [
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "samples": 1273,
+          "meanPrediction": 0.19565,
+          "observedRate": 0,
+          "calibratedRate": 0.00059
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "samples": 314,
+          "meanPrediction": 0.24007,
+          "observedRate": 0,
+          "calibratedRate": 0.00392
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "samples": 189,
+          "meanPrediction": 0.33638,
+          "observedRate": 0,
+          "calibratedRate": 0.00902
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "samples": 102,
+          "meanPrediction": 0.42955,
+          "observedRate": 0,
+          "calibratedRate": 0.02103
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "samples": 109,
+          "meanPrediction": 0.53268,
+          "observedRate": 0,
+          "calibratedRate": 0.02412
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "samples": 57,
+          "meanPrediction": 0.64286,
+          "observedRate": 0,
+          "calibratedRate": 0.05242
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "samples": 61,
+          "meanPrediction": 0.75,
+          "observedRate": 0,
+          "calibratedRate": 0.05682
+        },
+        {
+          "lower": 0.9,
+          "upper": 1,
+          "samples": 36,
+          "meanPrediction": 0.92,
+          "observedRate": 0,
+          "calibratedRate": 0.11585
+        }
+      ],
+      "metrics": {
+        "samples": 2141,
+        "mae": 2.26216,
+        "rmse": 2.60378,
+        "bias": 2.26216,
+        "brier": 0.10593,
+        "logLoss": 0.38107,
+        "wis": 0.7651,
+        "meanPinball": 0.34193,
+        "interval80Coverage": 1,
+        "interval80Width": 8.87377
+      }
+    },
+    "WR": {
+      "samples": 9624,
+      "eligible": true,
+      "minimumSamples": 80,
+      "bias": 0.31483,
+      "uncertaintyScale": 0.93224,
+      "residualQuantiles": {
+        "p10": -6.69829,
+        "p25": -4.43936,
+        "p50": -1.9239,
+        "p75": 2.63823,
+        "p90": 8.69407
+      },
+      "standardizedQuantiles": {
+        "p10": -0.92711,
+        "p25": -0.6715,
+        "p50": -0.31466,
+        "p75": 0.38477,
+        "p90": 1.24408
+      },
+      "availabilityBins": [
+        {
+          "lower": 0.1,
+          "upper": 0.2,
+          "samples": 18,
+          "meanPrediction": 0.19565,
+          "observedRate": 0.05556,
+          "calibratedRate": 0.07609
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "samples": 22,
+          "meanPrediction": 0.25124,
+          "observedRate": 0.09091,
+          "calibratedRate": 0.12037
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "samples": 59,
+          "meanPrediction": 0.36176,
+          "observedRate": 0.33898,
+          "calibratedRate": 0.33984
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "samples": 148,
+          "meanPrediction": 0.43908,
+          "observedRate": 0.34459,
+          "calibratedRate": 0.34804
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "samples": 276,
+          "meanPrediction": 0.54054,
+          "observedRate": 0.41667,
+          "calibratedRate": 0.41904
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "samples": 301,
+          "meanPrediction": 0.65324,
+          "observedRate": 0.52159,
+          "calibratedRate": 0.52369
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "samples": 504,
+          "meanPrediction": 0.75228,
+          "observedRate": 0.65278,
+          "calibratedRate": 0.65373
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "samples": 972,
+          "meanPrediction": 0.85196,
+          "observedRate": 0.81584,
+          "calibratedRate": 0.81602
+        },
+        {
+          "lower": 0.9,
+          "upper": 1,
+          "samples": 7324,
+          "meanPrediction": 0.96177,
+          "observedRate": 0.96518,
+          "calibratedRate": 0.96517
+        }
+      ],
+      "metrics": {
+        "samples": 9624,
+        "mae": 4.93414,
+        "rmse": 6.46193,
+        "bias": 0.31483,
+        "brier": 0.07318,
+        "logLoss": 0.24629,
+        "wis": 2.9842,
+        "meanPinball": 1.64893,
+        "interval80Coverage": 0.88664,
+        "interval80Width": 16.05836
+      }
+    },
+    "TE": {
+      "samples": 4757,
+      "eligible": true,
+      "minimumSamples": 80,
+      "bias": 0.17711,
+      "uncertaintyScale": 0.94649,
+      "residualQuantiles": {
+        "p10": -4.9876,
+        "p25": -3.34412,
+        "p50": -1.45282,
+        "p75": 2.05098,
+        "p90": 6.49042
+      },
+      "standardizedQuantiles": {
+        "p10": -0.9154,
+        "p25": -0.67099,
+        "p50": -0.29804,
+        "p75": 0.39049,
+        "p90": 1.20696
+      },
+      "availabilityBins": [
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "samples": 6,
+          "meanPrediction": 0.36662,
+          "observedRate": 0.66667,
+          "calibratedRate": 0.52273
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "samples": 21,
+          "meanPrediction": 0.44934,
+          "observedRate": 0.52381,
+          "calibratedRate": 0.50962
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "samples": 80,
+          "meanPrediction": 0.54736,
+          "observedRate": 0.425,
+          "calibratedRate": 0.43235
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "samples": 155,
+          "meanPrediction": 0.65587,
+          "observedRate": 0.6,
+          "calibratedRate": 0.60156
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "samples": 302,
+          "meanPrediction": 0.75715,
+          "observedRate": 0.7053,
+          "calibratedRate": 0.70603
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "samples": 622,
+          "meanPrediction": 0.85514,
+          "observedRate": 0.83441,
+          "calibratedRate": 0.83453
+        },
+        {
+          "lower": 0.9,
+          "upper": 1,
+          "samples": 3571,
+          "meanPrediction": 0.95724,
+          "observedRate": 0.94931,
+          "calibratedRate": 0.94931
+        }
+      ],
+      "metrics": {
+        "samples": 4757,
+        "mae": 3.78737,
+        "rmse": 5.08055,
+        "bias": 0.17711,
+        "brier": 0.08008,
+        "logLoss": 0.27602,
+        "wis": 2.31507,
+        "meanPinball": 1.28157,
+        "interval80Coverage": 0.89573,
+        "interval80Width": 12.24113
+      }
+    },
+    "RB": {
+      "samples": 6020,
+      "eligible": true,
+      "minimumSamples": 80,
+      "bias": 0.26187,
+      "uncertaintyScale": 0.92144,
+      "residualQuantiles": {
+        "p10": -6.71348,
+        "p25": -4.50288,
+        "p50": -1.95551,
+        "p75": 2.74198,
+        "p90": 8.82316
+      },
+      "standardizedQuantiles": {
+        "p10": -0.91843,
+        "p25": -0.66031,
+        "p50": -0.31134,
+        "p75": 0.3908,
+        "p90": 1.24452
+      },
+      "availabilityBins": [
+        {
+          "lower": 0.2,
+          "upper": 0.3,
+          "samples": 14,
+          "meanPrediction": 0.26355,
+          "observedRate": 0.21429,
+          "calibratedRate": 0.22368
+        },
+        {
+          "lower": 0.3,
+          "upper": 0.4,
+          "samples": 29,
+          "meanPrediction": 0.35392,
+          "observedRate": 0.27586,
+          "calibratedRate": 0.28676
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.5,
+          "samples": 58,
+          "meanPrediction": 0.44126,
+          "observedRate": 0.46552,
+          "calibratedRate": 0.46429
+        },
+        {
+          "lower": 0.5,
+          "upper": 0.6,
+          "samples": 146,
+          "meanPrediction": 0.54571,
+          "observedRate": 0.40411,
+          "calibratedRate": 0.40894
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.7,
+          "samples": 210,
+          "meanPrediction": 0.65298,
+          "observedRate": 0.60952,
+          "calibratedRate": 0.61047
+        },
+        {
+          "lower": 0.7,
+          "upper": 0.8,
+          "samples": 354,
+          "meanPrediction": 0.75046,
+          "observedRate": 0.66949,
+          "calibratedRate": 0.67061
+        },
+        {
+          "lower": 0.8,
+          "upper": 0.9,
+          "samples": 657,
+          "meanPrediction": 0.85424,
+          "observedRate": 0.84018,
+          "calibratedRate": 0.84026
+        },
+        {
+          "lower": 0.9,
+          "upper": 1,
+          "samples": 4552,
+          "meanPrediction": 0.96204,
+          "observedRate": 0.96859,
+          "calibratedRate": 0.96856
+        }
+      ],
+      "metrics": {
+        "samples": 6020,
+        "mae": 4.95984,
+        "rmse": 6.49232,
+        "bias": 0.26187,
+        "brier": 0.06839,
+        "logLoss": 0.23184,
+        "wis": 3.01989,
+        "meanPinball": 1.66749,
+        "interval80Coverage": 0.88272,
+        "interval80Width": 16.3866
+      }
+    }
+  },
+  "validation": {
+    "leakageSafe": true,
+    "holdoutSeason": 2025,
+    "checks": {
+      "holdoutSamples": true,
+      "wis": true,
+      "rmse": true,
+      "brier": true,
+      "coverage": true
+    },
+    "thresholds": {
+      "minimumHoldoutSamples": 500,
+      "minimumWisImprovement": 0,
+      "maximumRmseRegression": 0.08,
+      "maximumBrierRegression": 0.015,
+      "coverageMinimum": 0.65,
+      "coverageMaximum": 0.94
+    },
+    "evaluation": {
+      "samples": 6563,
+      "before": {
+        "samples": 6563,
+        "mae": 4.46083,
+        "rmse": 6.023,
+        "bias": 0.55562,
+        "brier": 0.07458,
+        "logLoss": 0.24981,
+        "wis": 2.66849,
+        "meanPinball": 1.46966,
+        "interval80Coverage": 0.88877,
+        "interval80Width": 14.81012
+      },
+      "after": {
+        "samples": 6563,
+        "mae": 4.2564,
+        "rmse": 5.97912,
+        "bias": 0.20005,
+        "brier": 0.06693,
+        "logLoss": 0.22795,
+        "wis": 2.59695,
+        "meanPinball": 1.43822,
+        "interval80Coverage": 0.8749,
+        "interval80Width": 13.42518
+      },
+      "improvement": {
+        "mae": 0.20443,
+        "rmse": 0.04387,
+        "brier": 0.00764,
+        "logLoss": 0.02186,
+        "wis": 0.07154,
+        "meanPinball": 0.03144,
+        "interval80Coverage": -0.01387
+      }
+    }
+  },
+  "digest": "2131ad6329c9057802a502940204274ed3d208dc7f906563eee26defb8d959f8"
+}

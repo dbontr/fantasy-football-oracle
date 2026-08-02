@@ -9,6 +9,11 @@ function integer(value, fallback, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, parsed));
 }
 
+function stringList(value) {
+  return Object.freeze([...new Set(String(value || "").split(",")
+    .map((row) => row.trim()).filter(Boolean))]);
+}
+
 function duration(value, fallback, minimum, maximum) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -35,6 +40,13 @@ module.exports = Object.freeze({
   ),
   advancedRuntimeDir: path.resolve(
     process.env.ORACLE_ADVANCED_RUNTIME_DIR || path.join(runtimeDir, "platform", "advanced-intelligence"),
+  ),
+  freeRuntimeDir: path.resolve(
+    process.env.ORACLE_FREE_RUNTIME_DIR || path.join(runtimeDir, "platform", "free-intelligence"),
+  ),
+  freeCalibrationPath: path.resolve(
+    process.env.ORACLE_FREE_CALIBRATION_PATH
+      || path.join(rootDir, "data", "calibration", "free-probabilistic.json"),
   ),
   shutdownRequestPath: process.env.ORACLE_SHUTDOWN_REQUEST_PATH
     ? path.resolve(process.env.ORACLE_SHUTDOWN_REQUEST_PATH)
@@ -80,6 +92,20 @@ module.exports = Object.freeze({
   ),
   maxAdvancedScenarios: integer(
     process.env.ORACLE_MAX_ADVANCED_SCENARIOS, 50_000, 100, 50_000,
+  ),
+  freeSources: stringList(process.env.ORACLE_FREE_SOURCES),
+  freeSyncEnabled: process.env.ORACLE_FREE_SYNC_ENABLED === "true",
+  freeSyncIntervalMs: duration(
+    process.env.ORACLE_FREE_SYNC_INTERVAL_MS,
+    6 * 60 * 60 * 1000,
+    60 * 60 * 1000,
+    7 * 24 * 60 * 60 * 1000,
+  ),
+  sleeperLeagueId: String(process.env.ORACLE_SLEEPER_LEAGUE_ID || ""),
+  openMeteoNonCommercialAcknowledged:
+    process.env.ORACLE_OPEN_METEO_NONCOMMERCIAL_ACK === "true",
+  maxForecastJournalRecords: integer(
+    process.env.ORACLE_MAX_FORECAST_JOURNAL_RECORDS, 200_000, 1000, 2_000_000,
   ),
   taskTimeoutMs: duration(process.env.ORACLE_TASK_TIMEOUT_MS, 45_000, 2_000, 300_000),
   defaultSimulations: integer(process.env.ORACLE_DEFAULT_SIMULATIONS, 15_000, 100, 50_000),

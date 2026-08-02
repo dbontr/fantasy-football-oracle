@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const { fileSha256, sha256 } = require("./lineage.js");
 
-const ARTIFACT_MANIFEST_VERSION = "oracle-artifacts-2026.1";
+const ARTIFACT_MANIFEST_VERSION = "oracle-artifacts-2026.2-v5.1";
 const DEFAULT_ARTIFACTS = Object.freeze([
   "package.json",
   "package-lock.json",
@@ -17,6 +17,8 @@ const DEFAULT_ARTIFACTS = Object.freeze([
   "artifacts/sbom.cdx.json",
   "data/calibration/historical-value.json",
   "data/calibration/historical-backtest-summary.json",
+  "data/calibration/free-probabilistic.json",
+  "data/calibration/free-probabilistic-summary.json",
 ]);
 
 function normalizeRelative(filePath) {

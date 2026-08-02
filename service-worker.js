@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "fantasy-football-oracle-v12-probabilistic-v5";
+const CACHE_NAME = "fantasy-football-oracle-v13-free-learning-v5.1";
 const APP_SHELL = [
   "./",
   "./index.html",

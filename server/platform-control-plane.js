@@ -18,8 +18,9 @@ const { registrySummary } = require("./schema-registry.js");
 const { ModelRegistry } = require("./model-registry.js");
 const { DriftMonitor } = require("./drift-monitor.js");
 const { AdvancedIntelligence } = require("./advanced-intelligence.js");
+const { FreeIntelligence } = require("./free-intelligence.js");
 
-const PLATFORM_VERSION = "oracle-platform-2026.2-v5";
+const PLATFORM_VERSION = "oracle-platform-2026.3-v5.1";
 const REQUEST_STARTED = Symbol("oracleRequestStarted");
 const DECISION_ROUTES = Object.freeze({
   "/api/draft/simulate": "draft-simulation",
@@ -114,6 +115,25 @@ class PlatformControlPlane {
       maxObservations: this.config.maxEvidenceObservations || 250000,
       maxScenarios: this.config.maxAdvancedScenarios || 50000,
     });
+    this.free = new FreeIntelligence({
+      datasetProvider: () => this.dataStore?.getDataset(),
+      advancedIntelligence: this.advanced,
+      eventStore: this.eventStore,
+      runtimeDir: options.freeRuntimeDir || (options.runtimeDir
+        ? path.join(this.runtimeDir, "free-intelligence")
+        : this.config.freeRuntimeDir || path.join(this.runtimeDir, "free-intelligence")),
+      seedCalibrationPath: this.config.freeCalibrationPath,
+      enabledSources: this.config.freeSources || [],
+      syncEnabled: this.config.freeSyncEnabled === true,
+      syncIntervalMs: this.config.freeSyncIntervalMs,
+      sleeperLeagueId: this.config.sleeperLeagueId,
+      openMeteoNonCommercialAcknowledged:
+        this.config.openMeteoNonCommercialAcknowledged === true,
+      maxJournalRecords: this.config.maxForecastJournalRecords,
+      clock: this.clock,
+      logger: this.log,
+    });
+    this.advanced.setForecastTransformer((forecast) => this.free.calibrateForecast(forecast));
     this.initialized = false;
     this.startedAt = Number(this.clock());
     this.backupStatusPath = path.join(this.runtimeDir, "backup-status.json");
@@ -130,6 +150,7 @@ class PlatformControlPlane {
     await this.models.initialize();
     await this.drift.initialize();
     await this.advanced.initialize();
+    await this.free.initialize();
     const artifactStatus = await this.artifacts.initialize();
     this.health.set("artifact-integrity", artifactStatus.valid ? "healthy" : "degraded", {
       message: artifactStatus.valid ? "Committed artifacts match the manifest" : "Artifact manifest is missing or mismatched",
@@ -161,11 +182,12 @@ class PlatformControlPlane {
       }, { source: "platform-control-plane" });
     };
     await persistDatasetSnapshot(this.dataStore.getDataset(), this.dataStore.getStatus());
-    this.unsubscribeDataset = this.dataStore.onDataset?.((dataset, status) => (
-      persistDatasetSnapshot(dataset, status).catch((error) => {
+    this.unsubscribeDataset = this.dataStore.onDataset?.((dataset, status) => {
+      this.free.refreshIdentity();
+      return persistDatasetSnapshot(dataset, status).catch((error) => {
         this.log.warn?.({ error }, "Dataset snapshot persistence failed");
-      })
-    ));
+      });
+    });
     this.initialized = true;
     await this.eventStore.append("platform.started", {
       platformVersion: PLATFORM_VERSION,
@@ -173,6 +195,7 @@ class PlatformControlPlane {
       dataStatus: this.dataStore?.getStatus?.() || null,
       computeStatus: this.pool?.stats?.() || null,
       advancedIntelligence: this.advanced.status(),
+      freeIntelligence: this.free.status(),
     }, { source: "platform-control-plane" });
     this.refreshComponents();
     return this.status();
@@ -271,6 +294,24 @@ class PlatformControlPlane {
         details: advanced,
       });
       this.metrics.gauge("oracle_v5_evidence_observations", advanced.evidence.observations || 0);
+    }
+    const free = this.free?.status?.() || null;
+    if (free) {
+      const journalHealthy = free.initialized && free.journal.valid;
+      this.health.set("free-intelligence", journalHealthy ? "healthy" : "unsafe", {
+        message: journalHealthy ? null : "The free forecast journal chain is invalid",
+        details: { calibration: free.calibration, journal: free.journal, identity: free.identity },
+      });
+      const enabled = free.sync.enabledSources.length;
+      const failures = free.sync.last?.failures || 0;
+      this.health.set("free-source-sync", enabled === 0 ? "healthy" : failures > 0 ? "degraded" : "healthy", {
+        message: enabled === 0 ? "Optional free-source synchronization is disabled"
+          : failures > 0 ? `${failures} optional free source syncs failed` : null,
+        details: free.sync,
+      });
+      this.metrics.gauge("oracle_free_journal_forecasts", free.journal.forecasts || 0);
+      this.metrics.gauge("oracle_free_journal_settlements", free.journal.settlements || 0);
+      this.metrics.gauge("oracle_free_calibration_approved", free.calibration.approved ? 1 : 0);
     }
   }
 
@@ -472,6 +513,7 @@ class PlatformControlPlane {
       drift: this.drift.status(),
       championship: this.optimizer?.status() || null,
       advancedIntelligence: this.advanced?.status() || null,
+      freeIntelligence: this.free?.status() || null,
       backup: publicBackup,
       health: componentHealth,
       slos: evaluateSLOs(metrics, this.config.sloTargets || {}),
@@ -496,6 +538,35 @@ class PlatformControlPlane {
 
   decisions(options = {}) {
     return this.ledger.list(options);
+  }
+
+  freeStatus() {
+    this.ensureInitialized();
+    return this.free.status();
+  }
+
+  async syncFreeSources(options = {}) {
+    this.ensureInitialized();
+    const result = await this.free.sync(options);
+    this.metrics.increment("oracle_free_sync_total", 1, {
+      outcome: result.failures ? "partial" : "success",
+    });
+    return result;
+  }
+
+  freeCalibrationStatus() {
+    this.ensureInitialized();
+    return this.free.status().calibration;
+  }
+
+  freeJournalReport(options = {}) {
+    this.ensureInitialized();
+    return this.free.journalReport(options);
+  }
+
+  async rebuildFreeCalibration(options = {}) {
+    this.ensureInitialized();
+    return this.free.rebuildCalibration(options);
   }
 
   advancedStatus() {
@@ -544,6 +615,21 @@ class PlatformControlPlane {
       digest: result.digest, week: result.week, asOf: result.asOf,
       players: result.forecasts.map((row) => row.player.id),
     }, { source: "advanced-intelligence" });
+    const shouldJournal = options.journal !== false
+      && !(Array.isArray(options.additionalObservations) && options.additionalObservations.length);
+    try {
+      const journaled = shouldJournal
+        ? await this.free.recordForecasts(result.forecasts, {
+          week: result.week, asOf: result.asOf, evidenceHead: result.evidenceHead,
+          forecastDigest: result.digest, requestId: options.requestId,
+        })
+        : [];
+      this.metrics.increment("oracle_free_forecasts_journaled_total",
+        journaled.filter((row) => row.inserted).length);
+    } catch (error) {
+      this.log.warn?.({ error }, "Forecast journal write failed");
+      this.metrics.increment("oracle_free_journal_failures_total", 1);
+    }
     return result;
   }
 
@@ -563,6 +649,16 @@ class PlatformControlPlane {
       scenarios: result.simulation.scenarios,
       elapsedMs,
     }, { source: "advanced-intelligence" });
+    try {
+      await this.free.recordForecasts(result.forecasts, {
+        week: result.simulation.week, asOf: result.asOf,
+        evidenceHead: result.evidenceHead, forecastDigest: result.forecastDigest,
+        requestId: options.requestId,
+      });
+    } catch (error) {
+      this.log.warn?.({ error }, "Portfolio forecast journal write failed");
+      this.metrics.increment("oracle_free_journal_failures_total", 1);
+    }
     const preferred = result.decision.actions.find((row) => (
       row.id === result.decision.preferredActionId
     ));
@@ -676,6 +772,7 @@ class PlatformControlPlane {
   async stop() {
     this.unsubscribeDataset?.();
     this.unsubscribeDataset = null;
+    await this.free?.stop?.();
     await this.advanced?.stop?.();
     this.initialized = false;
     await this.eventStore.close();
@@ -690,6 +787,7 @@ class PlatformControlPlane {
       models: this.models.status(),
       drift: this.drift.status(),
       advancedIntelligence: this.advanced?.status(),
+      freeIntelligence: this.free?.status(),
     });
   }
 }

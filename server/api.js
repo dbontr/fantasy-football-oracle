@@ -258,6 +258,7 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
   const artifacts = controlPlane.artifacts?.status?.() || {};
   const eventChain = controlPlane.eventStore?.status?.() || {};
   const advanced = controlPlane.advanced?.status?.() || null;
+  const free = controlPlane.free?.status?.() || null;
   const failures = [];
   const nativeAvailable = native.available ?? null;
   const nativeWorkers = native.workers ?? native.readyWorkers ?? 0;
@@ -267,6 +268,8 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
   const eventChainValid = eventChain.valid ?? null;
   const advancedReady = advanced === null ? null : advanced.initialized === true;
   const advancedEvidenceValid = advanced?.evidence?.valid ?? null;
+  const freeReady = free === null ? null : free.initialized === true;
+  const freeJournalValid = free?.journal?.valid ?? null;
 
   if (data.ready !== true) failures.push("player-data-unavailable");
   if (config.nativeRequired && (nativeAvailable !== true || liveWorkers < 1)) {
@@ -278,6 +281,9 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
   if (eventChainValid !== true) failures.push("event-chain-invalid");
   if (advanced && (advancedReady !== true || advancedEvidenceValid !== true)) {
     failures.push("advanced-evidence-invalid");
+  }
+  if (free && (freeReady !== true || freeJournalValid !== true)) {
+    failures.push("free-journal-invalid");
   }
 
   return {
@@ -295,6 +301,8 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
     eventChainValid,
     advancedReady,
     advancedEvidenceValid,
+    freeReady,
+    freeJournalValid,
     failures,
   };
 }
@@ -465,7 +473,10 @@ async function registerApiRoutes(fastify, services) {
 
 
   fastify.get("/api/v5/status", async (_request, reply) => (
-    reply.header("cache-control", "no-store").send(controlPlane.advancedStatus())
+    reply.header("cache-control", "no-store").send({
+      ...controlPlane.advancedStatus(),
+      freeIntelligence: controlPlane.freeStatus(),
+    })
   ));
 
   fastify.get("/api/v5/catalog", async (_request, reply) => (
@@ -486,6 +497,7 @@ async function registerApiRoutes(fastify, services) {
       playerIds: [request.params.id],
       week: request.query?.week,
       asOf: request.query?.asOf,
+      requestId: request.id,
     });
     return reply.header("cache-control", "no-store").send({
       ...result,
@@ -511,14 +523,18 @@ async function registerApiRoutes(fastify, services) {
     schema: { body: advancedForecastBodySchema(false) },
   }, async (request, reply) => reply
     .header("cache-control", "no-store")
-    .send(await controlPlane.advancedForecast(request.body)));
+    .send(await controlPlane.advancedForecast({ ...request.body, requestId: request.id })));
 
   fastify.post("/api/v5/what-if", {
     config: computeRouteConfig(20),
     schema: { body: advancedForecastBodySchema(true) },
   }, async (request, reply) => reply
     .header("cache-control", "no-store")
-    .send(await controlPlane.advancedForecast(request.body)));
+    .send(await controlPlane.advancedForecast({
+      ...request.body,
+      requestId: request.id,
+      journal: false,
+    })));
 
   fastify.post("/api/v5/portfolio/evaluate", {
     config: computeRouteConfig(6),
@@ -564,6 +580,70 @@ async function registerApiRoutes(fastify, services) {
     authorizeRefresh(request, config);
     return reply.header("cache-control", "no-store").send(
       controlPlane.advancedEvidence(request.query || {}),
+    );
+  });
+
+
+  fastify.get("/api/v5/free-sources", async (_request, reply) => reply
+    .header("cache-control", "no-store")
+    .send(controlPlane.freeStatus()));
+
+  fastify.get("/api/v5/calibration/status", async (_request, reply) => reply
+    .header("cache-control", "no-store")
+    .send(controlPlane.freeCalibrationStatus()));
+
+  fastify.get("/api/v5/calibration/report", async (_request, reply) => reply
+    .header("cache-control", "no-store")
+    .send({
+      calibration: controlPlane.freeCalibrationStatus(),
+      journal: controlPlane.freeJournalReport(),
+    }));
+
+  fastify.post("/api/v5/free-sources/sync", {
+    config: computeRouteConfig(3),
+    schema: { body: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        providers: {
+          type: "array", minItems: 1, maxItems: 3, uniqueItems: true,
+          items: { type: "string", enum: ["sleeper", "nflverse", "open-meteo"] },
+        },
+        force: { type: "boolean" },
+        season: { type: "integer", minimum: 1999, maximum: 2100 },
+        currentWeek: { type: "integer", minimum: 1, maximum: 22 },
+        lookback: { type: "integer", minimum: 2, maximum: 8 },
+        maximumGames: { type: "integer", minimum: 1, maximum: 20 },
+        leagueId: { type: "string", minLength: 1, maxLength: 80 },
+      },
+    } },
+  }, async (request, reply) => {
+    authorizeRefresh(request, config);
+    return reply.header("cache-control", "no-store").send(
+      await controlPlane.syncFreeSources(request.body || {}),
+    );
+  });
+
+  fastify.post("/api/v5/calibration/rebuild", {
+    config: computeRouteConfig(1),
+    schema: { body: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        holdoutSeason: { type: "integer", minimum: 1999, maximum: 2100 },
+        minimumSamples: { type: "integer", minimum: 40, maximum: 100000 },
+        minimumHoldoutSamples: { type: "integer", minimum: 100, maximum: 100000 },
+        minimumWisImprovement: { type: "number", minimum: 0, maximum: 20 },
+        maximumRmseRegression: { type: "number", minimum: 0, maximum: 5 },
+        maximumBrierRegression: { type: "number", minimum: 0, maximum: 1 },
+        coverageMinimum: { type: "number", minimum: 0.5, maximum: 0.9 },
+        coverageMaximum: { type: "number", minimum: 0.7, maximum: 1 },
+      },
+    } },
+  }, async (request, reply) => {
+    authorizeRefresh(request, config);
+    return reply.header("cache-control", "no-store").send(
+      await controlPlane.rebuildFreeCalibration(request.body || {}),
     );
   });
 

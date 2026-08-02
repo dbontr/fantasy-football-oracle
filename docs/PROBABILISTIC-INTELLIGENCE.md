@@ -27,3 +27,9 @@ Public forecast and what-if routes cannot persist evidence. Durable ingestion an
 ## Limits
 
 Oracle ships the evidence contracts and model effects, not licensed data. Connected market, tracking, offensive-line, route, and weather feeds remain deployment responsibilities. Correlation loadings are transparent engineering priors, not learned causal relationships or a calibrated play-level copula.
+
+## Zero-cost calibration
+
+The committed calibration is fit on chronological nflverse forecasts from 2021-2024 and evaluated on an untouched 2025 holdout. It improves MAE, RMSE, Brier score, log loss, weighted interval score, and mean pinball loss on that holdout. Forecasts remain valid without the artifact, but calibration is applied only when the document digest, schema, holdout metadata, and approval gates validate.
+
+The production journal gradually replaces the historical bootstrap with Oracle's own pre-outcome forecasts. Only the latest forecast for a player-week is eligible for calibration training, and request-scoped what-if evidence is never journaled.

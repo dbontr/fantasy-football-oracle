@@ -4,6 +4,21 @@ Fantasy Football Oracle 5.0 is a temporal, probabilistic fantasy-football decisi
 
 The browser remains installable and responsive. It keeps a deterministic JavaScript engine and Web Worker for offline or degraded operation, but a healthy server routes analysis to persistent C++ workers.
 
+## Zero-cost public intelligence 5.1
+
+Version 5.1 adds free, optional evidence and continuous probabilistic learning without requiring a paid API:
+
+- Sleeper public NFL state, player identity, injury, practice, depth-chart, trend, and optional league context;
+- nflverse CC-BY-4.0 player identities and weekly outcomes for rolling opportunity evidence, settlement, and walk-forward backtesting;
+- opt-in Open-Meteo game weather with venue-aware indoor skipping and required attribution;
+- a guarded ESPN/Sleeper/GSIS identity graph that refuses ambiguous or conflicting matches;
+- an append-only forecast journal with deterministic deduplication and settlement scoring;
+- proper probabilistic scores: Brier, log loss, pinball loss, weighted interval score, coverage, MAE, and RMSE;
+- position-aware calibration fitted on 2021-2024 and approved only after improvement on an untouched 2025 holdout;
+- offline startup, conditional caching, byte limits, origin and redirect allowlists, stale-if-error, and provider circuit breakers.
+
+All public connectors are disabled by default. Provider downtime never blocks startup or readiness. Open-Meteo's hosted free tier is restricted to non-commercial use and requires explicit operator acknowledgement before synchronization.
+
 ## Temporal probabilistic architecture 5.0
 
 Version 5.0 adds a temporal decision layer above the native simulation engine:
@@ -295,6 +310,11 @@ Useful endpoints:
 - `POST /api/v5/portfolio/evaluate`
 - `POST /api/v5/evidence` (administrator)
 - `GET /api/v5/evidence` (administrator)
+- `GET /api/v5/free-sources`
+- `GET /api/v5/calibration/status`
+- `GET /api/v5/calibration/report`
+- `POST /api/v5/free-sources/sync` (administrator)
+- `POST /api/v5/calibration/rebuild` (administrator)
 
 `GET /api/ready` is the minimal no-store readiness probe used by containers and load balancers. Detailed `/api/health` telemetry identifies whether requests are using native C++, reports feed lineage, integrity, snapshots, model governance, drift, recovery age, queue health, and SLO state. Detailed metrics, manifests, event history, decision history, and model-control writes require local or authenticated administrative access.
 
@@ -333,6 +353,14 @@ ORACLE_MAX_EVIDENCE_OBSERVATIONS=250000
 ORACLE_MAX_EVIDENCE_BATCH=500
 ORACLE_MAX_ADVANCED_FORECAST_PLAYERS=64
 ORACLE_MAX_ADVANCED_SCENARIOS=50000
+ORACLE_FREE_RUNTIME_DIR=
+ORACLE_FREE_CALIBRATION_PATH=
+ORACLE_FREE_SOURCES=
+ORACLE_FREE_SYNC_ENABLED=false
+ORACLE_FREE_SYNC_INTERVAL_MS=21600000
+ORACLE_SLEEPER_LEAGUE_ID=
+ORACLE_OPEN_METEO_NONCOMMERCIAL_ACK=false
+ORACLE_MAX_FORECAST_JOURNAL_RECORDS=200000
 ```
 
 Production containers set `ORACLE_NATIVE_REQUIRED=true`. Local development can leave it false to retain JavaScript fallback when a compiler or binary is unavailable.
@@ -411,6 +439,13 @@ The current suite includes health and recovery intelligence, coaching intelligen
 - `server/scenario-engine.js` - correlated, order-independent paired future simulation
 - `server/robust-decision.js` - probability-of-best, regret, CVaR, Pareto, and sensitivity ranking
 - `server/advanced-intelligence.js` - v5 lifecycle, limits, digests, forecasts, and portfolios
+- `server/free-intelligence.js` - optional free-source sync, calibration, journaling, and promotion
+- `server/free-source-cache.js` - allowlisted conditional cache, stale fallback, and circuit breakers
+- `server/sleeper-connector.js` - free Sleeper player, trend, and league evidence
+- `server/nflverse-connector.js` - CC-BY nflverse identities, outcomes, and rolling evidence
+- `server/open-meteo-connector.js` - opt-in game weather with non-commercial acknowledgement
+- `server/forecast-journal.js` - hash-chained forecast and settlement learning history
+- `server/probabilistic-calibration.js` - proper scores and holdout-gated calibration
 - `lab.html`, `lab.css`, `lab.js` - Research Lab for distributions, what-ifs, and paired slates
 - `server/coaching-model.js` — evidence-shrunk staff, scheme, leadership, and development model
 - `server/opportunity-model.js` — historical usage, regression, analog, and age-curve integration

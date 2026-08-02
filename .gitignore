@@ -23,3 +23,5 @@ native/bin/build-metadata.json
 native/bin/build-metadata.json.*.tmp
 native/bin/oracle-engine-build-*
 native/bin/oracle-engine*.bak
+
+data/free-sources/cache/

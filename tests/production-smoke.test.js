@@ -20,6 +20,10 @@ test("production smoke accepts a strict native-ready service", () => {
     strictArtifacts: true,
     artifactValid: true,
     eventChainValid: true,
+    advancedReady: true,
+    advancedEvidenceValid: true,
+    freeReady: true,
+    freeJournalValid: true,
     failures: [],
   }));
   assert.doesNotThrow(() => validateHealth({
@@ -62,4 +66,19 @@ test("production smoke rejects an invalid advanced evidence chain", () => {
     advancedEvidenceValid: false,
     failures: [],
   }), /advanced evidence chain/i);
+});
+
+
+test("production smoke rejects an invalid free forecast journal chain", () => {
+  assert.throws(() => validateReadiness({
+    ready: true,
+    status: "ready",
+    dataReady: true,
+    eventChainValid: true,
+    advancedReady: true,
+    advancedEvidenceValid: true,
+    freeReady: true,
+    freeJournalValid: false,
+    failures: [],
+  }), /free forecast journal chain/i);
 });

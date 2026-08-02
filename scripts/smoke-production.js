@@ -24,6 +24,10 @@ function validateReadiness(payload = {}) {
     assertCondition(payload.advancedReady === true, "Advanced intelligence is not ready");
     assertCondition(payload.advancedEvidenceValid === true, "Advanced evidence chain is invalid");
   }
+  if (payload.freeReady !== null && payload.freeReady !== undefined) {
+    assertCondition(payload.freeReady === true, "Free intelligence is not ready");
+    assertCondition(payload.freeJournalValid === true, "Free forecast journal chain is invalid");
+  }
   if (payload.nativeRequired) {
     assertCondition(payload.nativeAvailable === true, "Required native engine is unavailable");
     assertCondition(Number(payload.liveWorkers || 0) > 0, "Required native workers are not live");
@@ -70,7 +74,15 @@ async function runSmoke(options = {}) {
   const v5 = await fetchJson(`${baseUrl}/api/v5/status`);
   assertCondition(v5.initialized === true, "Advanced intelligence status is not initialized");
   assertCondition(v5.evidence?.valid === true, "Advanced evidence status is invalid");
-  return { baseUrl, readiness, health, rootStatus: root.status, labStatus: lab.status, v5 };
+  const free = await fetchJson(`${baseUrl}/api/v5/free-sources`);
+  assertCondition(free.initialized === true, "Free intelligence status is not initialized");
+  assertCondition(free.networkAtStartup === false, "Free intelligence performed network work at startup");
+  assertCondition(free.journal?.valid === true, "Free forecast journal status is invalid");
+  const calibration = await fetchJson(`${baseUrl}/api/v5/calibration/status`);
+  assertCondition(calibration.valid === true, "Free calibration artifact is invalid");
+  assertCondition(calibration.approved === true, "Free calibration is not holdout approved");
+  assertCondition(calibration.validation?.leakageSafe === true, "Free calibration is not leakage safe");
+  return { baseUrl, readiness, health, rootStatus: root.status, labStatus: lab.status, v5, free, calibration };
 }
 async function main() {
   const result = await runSmoke({
@@ -90,6 +102,12 @@ async function main() {
     strictArtifacts: result.readiness.strictArtifacts,
     advancedReady: result.readiness.advancedReady,
     advancedEvidenceValid: result.readiness.advancedEvidenceValid,
+    freeReady: result.readiness.freeReady,
+    freeJournalValid: result.readiness.freeJournalValid,
+    freeCalibrationApproved: result.calibration.approved,
+    freeCalibrationHoldoutSeason: result.calibration.holdoutSeason,
+    freeJournalForecasts: result.free.journal.forecasts,
+    freeJournalSettlements: result.free.journal.settlements,
   })}\n`);
 }
 

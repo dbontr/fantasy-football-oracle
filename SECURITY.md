@@ -20,6 +20,12 @@ Durable v5 evidence is operational data. Persistent writes through `POST /api/v5
 
 Do not include access tokens, private medical records, account identifiers, or licensed raw-feed payloads in evidence metadata. Store connector credentials outside Oracle and ingest only the normalized observation needed for a forecast.
 
+## Public-source network boundary
+
+Free connectors do not accept user-supplied URLs. Each source has fixed HTTPS origins, fixed path prefixes, narrowly scoped redirect origins, response byte limits, cache freshness rules, and a circuit breaker. Cached payloads are SHA-256 verified before every use. Source synchronization and calibration rebuilds are administrator-only.
+
+The application performs no network synchronization during startup. Public what-if forecasts cannot write evidence and are excluded from the production forecast journal. Raw provider caches are ignored by Git and should not contain credentials. Open-Meteo remains disabled unless the operator explicitly acknowledges the hosted free tier's non-commercial restriction.
+
 ## Administrative surfaces
 
 Detailed metrics, artifact manifests, event history, decision records, model promotion, rollback, drift writes, and manual refresh are restricted to direct loopback access unless an administrator credential is configured. Requests carrying proxy-forwarding headers always require `ORACLE_ADMIN_TOKEN`, even when the proxy socket is loopback. Public health output intentionally removes absolute filesystem paths and replica destinations; `/api/ready` provides the smaller production probe.
