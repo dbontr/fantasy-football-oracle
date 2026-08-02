@@ -18,7 +18,11 @@ const { NativeEnginePool } = require("./native-engine-pool.js");
 const { HybridComputePool } = require("./hybrid-compute-pool.js");
 const { PlatformControlPlane } = require("./platform-control-plane.js");
 const { publicErrorPayload, statusForError } = require("./http-errors.js");
-const { createShutdownController, installSignalHandlers } = require("./lifecycle.js");
+const {
+  createShutdownController,
+  installShutdownFileWatcher,
+  installSignalHandlers,
+} = require("./lifecycle.js");
 
 const STATIC_FILES = new Set([
   "index.html",
@@ -55,6 +59,8 @@ async function buildServer(options = {}) {
   });
   const nativePool = new NativeEnginePool({
     binary: config.nativeDisabled ? null : config.nativeBinary,
+    metadataPath: config.nativeBuildMetadataPath,
+    requireIntegrity: config.strictArtifactIntegrity,
     size: config.nativeWorkerCount,
     maxQueue: config.maxQueue,
     taskTimeoutMs: config.taskTimeoutMs,
@@ -101,6 +107,42 @@ async function buildServer(options = {}) {
   });
 
   let unsubscribeDataset = null;
+  let cleanupPromise = null;
+  const cleanupResources = ({ recordStop = false } = {}) => {
+    if (cleanupPromise) return cleanupPromise;
+    cleanupPromise = (async () => {
+      const failures = [];
+      const attempt = async (component, operation) => {
+        try {
+          await operation();
+        } catch (error) {
+          failures.push(error);
+          fastify.log.warn?.({ error, component }, "Oracle resource cleanup failed");
+        }
+      };
+      if (recordStop) {
+        await attempt("platform-stop-event", () => controlPlane.eventStore?.append?.(
+          "platform.stopped",
+          { uptimeSeconds: Math.round(process.uptime()) },
+          { source: "platform-control-plane" },
+        ));
+      }
+      await attempt("control-plane", () => controlPlane.stop?.());
+      await attempt("dataset-subscription", async () => unsubscribeDataset?.());
+      unsubscribeDataset = null;
+      await attempt("data-store", async () => dataStore.stop?.());
+      await attempt("compute-pool", () => pool.close?.());
+      if (ephemeralPlatform) {
+        await attempt("ephemeral-platform", () => (
+          fs.rm(platformRuntimeDir, { recursive: true, force: true })
+        ));
+      }
+      if (failures.length) {
+        throw new AggregateError(failures, "Oracle resource cleanup failed");
+      }
+    })();
+    return cleanupPromise;
+  };
   try {
     controlPlane.attachFastify?.(fastify);
     pool.start();
@@ -120,25 +162,16 @@ async function buildServer(options = {}) {
     fastify.decorate("oracleServices", { config, dataStore, pool, controlPlane });
     await registerApiRoutes(fastify, { config, dataStore, pool, controlPlane });
   } catch (error) {
-    unsubscribeDataset?.();
-    dataStore.stop?.();
     try {
-      await controlPlane.stop?.();
+      await cleanupResources();
     } catch (cleanupError) {
-      fastify.log.warn?.({ error: cleanupError }, "Control-plane startup cleanup failed");
-    }
-    try {
-      await pool.close();
-    } catch (cleanupError) {
-      fastify.log.warn?.({ error: cleanupError }, "Compute-pool startup cleanup failed");
-    }
-    if (ephemeralPlatform) {
-      await fs.rm(platformRuntimeDir, { recursive: true, force: true });
+      fastify.log.warn?.({ error: cleanupError }, "Oracle startup cleanup was incomplete");
     }
     throw error;
   }
 
-  await fastify.register(staticPlugin, {
+  try {
+    await fastify.register(staticPlugin, {
     root: config.rootDir,
     prefix: "/",
     index: false,
@@ -180,39 +213,66 @@ async function buildServer(options = {}) {
       .send(publicErrorPayload(error, statusCode, request.id));
   });
 
-  fastify.addHook("onClose", async () => {
+    fastify.addHook("onClose", async () => {
+      await cleanupResources({ recordStop: true });
+    });
+  } catch (error) {
     try {
-      await controlPlane.eventStore?.append?.(
-        "platform.stopped",
-        { uptimeSeconds: Math.round(process.uptime()) },
-        { source: "platform-control-plane" },
-      );
-    } catch {}
-    await controlPlane.stop?.();
-    unsubscribeDataset?.();
-    dataStore.stop();
-    await pool.close();
-    if (ephemeralPlatform) await fs.rm(platformRuntimeDir, { recursive: true, force: true });
-  });
+      await cleanupResources();
+    } catch (cleanupError) {
+      fastify.log.warn?.({ error: cleanupError }, "Oracle route setup cleanup was incomplete");
+    }
+    throw error;
+  }
 
   return fastify;
 }
 
-async function start() {
-  const server = await buildServer();
-  const address = await server.listen({
-    host: defaultConfig.host,
-    port: defaultConfig.port,
+async function start(options = {}) {
+  const builder = options.builder || buildServer;
+  const server = await builder(options.buildOptions || {});
+  const config = options.config || server.oracleServices?.config || defaultConfig;
+  const shutdown = createShutdownController({
+    server,
+    ...(options.shutdownOptions || {}),
   });
-  server.log.info({ address }, "Fantasy Football Oracle server ready");
+  const removeSignalHandlers = installSignalHandlers({
+    shutdown,
+    processRef: options.processRef || process,
+  });
+  const removeShutdownWatcher = installShutdownFileWatcher({
+    filePath: config.shutdownRequestPath,
+    shutdown,
+    onError: (error) => server.log?.error?.(
+      { error, filePath: config.shutdownRequestPath },
+      "Shutdown request watcher failed",
+    ),
+    ...(options.shutdownWatcherOptions || {}),
+  });
+  server.addHook?.("onClose", async () => {
+    removeSignalHandlers();
+    removeShutdownWatcher();
+  });
 
-  const shutdown = createShutdownController({ server });
-  installSignalHandlers({ shutdown });
+  let address;
+  try {
+    address = await server.listen({ host: config.host, port: config.port });
+  } catch (error) {
+    try {
+      await server.close();
+    } catch (cleanupError) {
+      server.log?.warn?.({ error: cleanupError }, "Listen failure cleanup was incomplete");
+    }
+    throw error;
+  }
+  server.log?.info?.({ address }, "Fantasy Football Oracle server ready");
+  return { address, server, shutdown };
 }
 
 module.exports = {
   buildServer,
   isAllowedStaticPath,
+  start,
 };
 
 if (require.main === module) {

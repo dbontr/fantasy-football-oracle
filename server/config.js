@@ -33,6 +33,9 @@ module.exports = Object.freeze({
   platformRuntimeDir: path.resolve(
     process.env.ORACLE_PLATFORM_RUNTIME_DIR || path.join(runtimeDir, "platform"),
   ),
+  shutdownRequestPath: process.env.ORACLE_SHUTDOWN_REQUEST_PATH
+    ? path.resolve(process.env.ORACLE_SHUTDOWN_REQUEST_PATH)
+    : "",
   artifactManifestPath: path.resolve(
     process.env.ORACLE_ARTIFACT_MANIFEST || path.join(rootDir, "data", "artifact-manifest.json"),
   ),
@@ -43,6 +46,11 @@ module.exports = Object.freeze({
       "native",
       "bin",
       process.platform === "win32" ? "oracle-engine.exe" : "oracle-engine",
+    ),
+  ),
+  nativeBuildMetadataPath: path.resolve(
+    process.env.ORACLE_NATIVE_BUILD_METADATA || path.join(
+      rootDir, "native", "bin", "build-metadata.json",
     ),
   ),
   nativeDisabled: process.env.ORACLE_NATIVE_DISABLED === "true",

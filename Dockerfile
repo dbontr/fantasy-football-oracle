@@ -25,6 +25,7 @@ RUN apk add --no-cache libstdc++
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 COPY --from=native-builder /build/native/bin/oracle-engine ./native/bin/oracle-engine
+COPY --from=native-builder /build/native/bin/build-metadata.json ./native/bin/build-metadata.json
 
 RUN chmod +x ./native/bin/oracle-engine \
     && rm -rf tests docs native/src native/third_party \

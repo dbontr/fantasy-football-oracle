@@ -37,6 +37,7 @@ The application does not automatically load `.env`; pass settings through the sh
 
 ```text
 ORACLE_NATIVE_BINARY=
+ORACLE_NATIVE_BUILD_METADATA=
 ORACLE_NATIVE_WORKERS=4
 ORACLE_NATIVE_DISABLED=false
 ORACLE_NATIVE_REQUIRED=true
@@ -63,7 +64,7 @@ npm run service:windows:status
 npm run service:windows:smoke
 ```
 
-The task runs `npm run doctor -- --strict --json` before every start. It refuses to launch when the repository is dirty or behind its upstream, native compute is unavailable, release artifacts are invalid, required production flags are disabled, the runtime directories are not writable, or a trusted proxy lacks `ORACLE_ADMIN_TOKEN`.
+The task runs `npm run doctor -- --strict --json` before every start. The doctor validates the complete native capability contract and verifies the executable SHA-256 against builder-generated metadata before the service can become ready. It refuses to launch when the repository is dirty or behind its upstream, native compute is unavailable, release artifacts are invalid, required production flags are disabled, the runtime directories are not writable, or a trusted proxy lacks `ORACLE_ADMIN_TOKEN`.
 
 Optional machine-local settings belong in ignored `.env.local`:
 
@@ -76,8 +77,8 @@ ORACLE_STRICT_ARTIFACT_INTEGRITY=true
 ORACLE_ADMIN_TOKEN=<random-secret>
 ```
 
-The parser accepts literal `NAME=value` lines only and does not execute PowerShell. Runtime PID and log files are stored under `data/runtime/service`. Use `npm run service:windows:restart`, `service:windows:stop`, or `service:windows:uninstall` for lifecycle control.
-Use `npm run service:windows:install -- -RuntimeDir D:\oracle-runtime` when state must live outside the checkout or when validating an isolated secondary instance. PID and log files follow the selected runtime directory.
+The parser accepts literal `NAME=value` lines only and does not execute PowerShell. Runtime PID and log files are stored under `data/runtime/service`. Use `npm run service:windows:restart`, `service:windows:stop`, or `service:windows:uninstall` for lifecycle control. Stop writes a shutdown request consumed by the Node lifecycle controller, waits for resource cleanup, and force-terminates only when the bounded graceful window expires.
+Use `npm run service:windows:install -- -RuntimeDir D:\oracle-runtime` when state must live outside the checkout or when validating an isolated secondary instance. PID, log, and shutdown-request files follow the selected runtime directory. Run `npm run service:windows:test` for an isolated strict launch/readiness/smoke/graceful-stop verification without installing a scheduled task.
 
 ## Docker
 
@@ -86,7 +87,7 @@ The included multi-stage Dockerfile:
 1. installs GCC in a builder stage,
 2. compiles the Linux C++20 executable,
 3. installs production Node dependencies in a separate stage,
-4. copies only the executable and application into the runtime image,
+4. copies the executable, its SHA-256 build metadata, and the application into the runtime image,
 5. installs `libstdc++`, runs as the unprivileged `node` user, enables strict artifact integrity, and checks `/api/ready`.
 
 ```bash
@@ -176,7 +177,7 @@ ORACLE_TRUST_PROXY=true
 ## Health and operations
 
 `GET /api/ready` returns a small no-store readiness document. It returns HTTP 503 when player data is unavailable, required native workers are unavailable, strict artifact integrity fails, or the event chain is invalid. It intentionally excludes detailed model, event, and backup state.
-A fully busy native pool remains ready: `readyWorkers` reports currently idle capacity and may be zero under load, while readiness requires a valid native engine and at least one configured worker. Queue depth and saturation remain visible in `/api/health`.
+A fully busy native pool remains ready: `readyWorkers` reports currently idle capacity and may be zero under load, while readiness requires a valid native engine and at least one live worker. `liveWorkers` and `restartingWorkers` distinguish usable capacity from configured capacity. Queue depth and saturation remain visible in `/api/health`.
 
 `GET /api/health` reports:
 
@@ -194,7 +195,7 @@ A fully busy native pool remains ready: `readyWorkers` reports currently idle ca
 
 `GET /api/data/status` reports refresh age and the most recent refresh failure. Logs are structured JSON when the Fastify logger is enabled.
 
-A native worker crash rejects only its active task, starts a replacement process, and leaves the API running. Process shutdown is idempotent and bounded; a stalled close fails closed after 20 seconds rather than leaving an indefinitely half-stopped service. Repeated native failures appear in health telemetry. When `ORACLE_NATIVE_REQUIRED=true`, startup fails if the binary cannot be probed.
+A native worker crash rejects only its active task, schedules a replacement with bounded exponential backoff, and leaves the API running. Queue time counts toward the same task deadline, so requests cannot wait forever while every worker is restarting. Process shutdown is idempotent and bounded; a stalled close fails closed after 20 seconds rather than leaving an indefinitely half-stopped service. Repeated native failures appear in health telemetry. When `ORACLE_NATIVE_REQUIRED=true`, startup fails if the binary cannot be probed.
 
 Scale vertically before scaling worker counts. Too many native processes increase CPU contention and memory pressure. Multiple web instances can serve independent browser users, although each instance maintains its own runtime data cache.
 

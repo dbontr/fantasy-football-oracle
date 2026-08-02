@@ -43,6 +43,9 @@ function normalizeComputeStats(stats = {}) {
     engineVersion: native.engineVersion ?? stats.engineVersion ?? null,
     nativeAvailable: native.available ?? stats.nativeAvailable ?? null,
     workers,
+    configuredWorkers: native.configuredWorkers ?? stats.configuredWorkers ?? workers,
+    liveWorkers: native.liveWorkers ?? stats.liveWorkers ?? workers,
+    restartingWorkers: native.restartingWorkers ?? stats.restartingWorkers ?? 0,
     readyWorkers: native.readyWorkers ?? stats.readyWorkers ?? workers,
     busy: native.busy ?? stats.busy ?? null,
     queued: native.queued ?? stats.queued ?? null,
@@ -51,6 +54,7 @@ function normalizeComputeStats(stats = {}) {
     nativeFailures: stats.nativeFailures ?? 0,
     fallbackRuns: stats.fallbackRuns ?? 0,
     fallbackWorkers: fallback.workers ?? null,
+    integrity: native.integrity ?? null,
   };
 }
 

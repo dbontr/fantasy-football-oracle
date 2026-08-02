@@ -100,9 +100,9 @@ npm run doctor
 NODE_ENV=production ORACLE_NATIVE_REQUIRED=true ORACLE_STRICT_ARTIFACT_INTEGRITY=true npm run doctor -- --strict
 ```
 
-The report checks Node compatibility, production policy, Git cleanliness and upstream drift, artifact bytes, the native capability handshake, and writable runtime directories. A strict failure is a deployment blocker. Warnings remain visible in development mode rather than being silently converted into passes.
+The report checks Node compatibility, production policy, Git cleanliness and upstream drift, artifact bytes, the complete native capability contract, native executable SHA-256 metadata, and writable runtime directories. A strict failure is a deployment blocker. Warnings remain visible in development mode rather than being silently converted into passes.
 
-On Windows, the scheduled-task manager executes the strict doctor automatically before each start. `npm run service:windows:status` reports task state, validated process identity, readiness, port, repository root, and log locations. `npm run service:windows:smoke` then verifies strict readiness and the browser shell.
+On Windows, the scheduled-task manager executes the strict doctor automatically before each start. `npm run service:windows:status` reports task state, validated process identity, readiness, port, repository root, and log locations. `npm run service:windows:smoke` then verifies strict readiness and the browser shell. Stop requests are graceful first and forced only after the bounded shutdown window; `npm run service:windows:test` exercises the complete isolated run/smoke/stop lifecycle.
 
 ## Incident priorities
 
@@ -135,7 +135,7 @@ Disable automatic promotion. Compare recent outcome definitions with the origina
 ## Game-day operating cadence
 
 - Refresh and verify data before the first actionable window.
-- Confirm required feeds, native workers, artifact integrity, and backup state.
+- Confirm required feeds, live native workers, native binary integrity, artifact integrity, and backup state.
 - Recalculate after material injury, inactive, weather, depth-chart, or transaction events.
 - Use paired candidate actions instead of comparing independently simulated outputs.
 - Record the selected action and later outcome.
