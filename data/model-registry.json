@@ -1,0 +1,51 @@
+{
+  "version": "oracle-model-registry-2026.1",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "domains": {
+    "projection": {
+      "champion": "oracle-ensemble-2026.5-health",
+      "models": {
+        "oracle-ensemble-2026.5-health": {
+          "status": "production",
+          "artifact": "server/projection-model.js",
+          "deployedAt": "2026-08-01T00:00:00.000Z",
+          "rollback": null
+        }
+      }
+    },
+    "context": {
+      "champion": "oracle-context-2026.3-health",
+      "models": {
+        "oracle-context-2026.3-health": {
+          "status": "production",
+          "artifact": "server/context-intelligence.js",
+          "deployedAt": "2026-08-01T00:00:00.000Z",
+          "rollback": null
+        }
+      }
+    },
+    "opportunity": {
+      "champion": "oracle-opportunity-2026.1",
+      "models": {
+        "oracle-opportunity-2026.1": {
+          "status": "production",
+          "artifact": "data/opportunity-2026.json",
+          "deployedAt": "2026-08-01T00:00:00.000Z",
+          "holdoutSeason": 2025,
+          "rollback": null
+        }
+      }
+    },
+    "health": {
+      "champion": "oracle-health-2026.1",
+      "models": {
+        "oracle-health-2026.1": {
+          "status": "production",
+          "artifact": "data/health-calibration-2026.json",
+          "deployedAt": "2026-08-01T00:00:00.000Z",
+          "rollback": null
+        }
+      }
+    }
+  }
+}

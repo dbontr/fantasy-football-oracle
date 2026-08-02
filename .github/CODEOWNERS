@@ -1,0 +1,11 @@
+# Protect architecture, recovery, model, and deployment surfaces.
+* @dbontr
+
+/.github/ @dbontr
+/native/ @dbontr
+/server/ @dbontr
+/scripts/ @dbontr
+/data/ @dbontr
+/package.json @dbontr
+/package-lock.json @dbontr
+/MANIFEST.sha256 @dbontr

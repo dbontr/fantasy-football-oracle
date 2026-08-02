@@ -1,0 +1,26 @@
+{
+  "name": "Fantasy Football Oracle",
+  "short_name": "FF Oracle",
+  "description": "Advanced browser-first fantasy football draft, lineup, waiver, and trade intelligence.",
+  "start_url": "./#draft",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07130f",
+  "theme_color": "#0b2f25",
+  "categories": ["sports", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "icons/oracle-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/oracle-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

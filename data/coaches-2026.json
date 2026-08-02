@@ -1,0 +1,1517 @@
+{
+  "meta": {
+    "version": "oracle-coaching-2026.1",
+    "season": 2026,
+    "verifiedAt": "2026-07-31",
+    "coverage": 32,
+    "methodology": "Bayesian-shrunk staff priors for leadership, scheme, usage, development, continuity, and uncertainty",
+    "staffSource": "NFL.com 2026 coaching tracker and current team staff directories",
+    "scoreNotice": "Scores are Oracle modeling priors, not objective facts or personnel evaluations."
+  },
+  "teams": {
+    "ARI": {
+      "team": "ARI",
+      "teamName": "Arizona Cardinals",
+      "headCoach": "Mike LaFleur",
+      "offensiveCoordinator": "Nathaniel Hackett",
+      "defensiveCoordinator": "Nick Rallis",
+      "offensivePlayCaller": "Mike LaFleur",
+      "archetype": "shanahan",
+      "schemeLabel": "Wide-zone play action",
+      "newStaff": true,
+      "evidenceSeasons": 3,
+      "confidence": 0.55,
+      "leadership": {
+        "leadership": 0.56,
+        "adaptability": 0.63,
+        "roleClarity": 0.57,
+        "continuity": 0.12,
+        "workloadManagement": 0.58
+      },
+      "offense": {
+        "design": 0.69,
+        "pace": 0.55,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.61,
+        "teUsage": 0.64,
+        "qbRun": 0.43,
+        "playAction": 0.78,
+        "motion": 0.84,
+        "redZone": 0.67,
+        "aggression": 0.62
+      },
+      "defense": {
+        "design": 0.61,
+        "development": 0.6,
+        "aggression": 0.62,
+        "stability": 0.58
+      },
+      "development": {
+        "QB": 0.685,
+        "RB": 0.693,
+        "WR": 0.668,
+        "TE": 0.689,
+        "DST": 0.597,
+        "K": 0.721
+      }
+    },
+    "ATL": {
+      "team": "ATL",
+      "teamName": "Atlanta Falcons",
+      "headCoach": "Kevin Stefanski",
+      "offensiveCoordinator": "Tommy Rees",
+      "defensiveCoordinator": "Jeff Ulbrich",
+      "offensivePlayCaller": "Tommy Rees",
+      "archetype": "balanced",
+      "schemeLabel": "Balanced play-action",
+      "newStaff": true,
+      "evidenceSeasons": 7,
+      "confidence": 0.69,
+      "leadership": {
+        "leadership": 0.72,
+        "adaptability": 0.69,
+        "roleClarity": 0.7,
+        "continuity": 0.12,
+        "workloadManagement": 0.66
+      },
+      "offense": {
+        "design": 0.73,
+        "pace": 0.53,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.56,
+        "teUsage": 0.63,
+        "qbRun": 0.45,
+        "playAction": 0.7,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.61
+      },
+      "defense": {
+        "design": 0.69,
+        "development": 0.68,
+        "aggression": 0.68,
+        "stability": 0.66
+      },
+      "development": {
+        "QB": 0.703,
+        "RB": 0.703,
+        "WR": 0.699,
+        "TE": 0.708,
+        "DST": 0.689,
+        "K": 0.778
+      }
+    },
+    "BAL": {
+      "team": "BAL",
+      "teamName": "Baltimore Ravens",
+      "headCoach": "Jesse Minter",
+      "offensiveCoordinator": "Declan Doyle",
+      "defensiveCoordinator": "Anthony Weaver",
+      "offensivePlayCaller": "Declan Doyle",
+      "archetype": "power",
+      "schemeLabel": "Power-run vertical",
+      "newStaff": true,
+      "evidenceSeasons": 2,
+      "confidence": 0.52,
+      "leadership": {
+        "leadership": 0.65,
+        "adaptability": 0.67,
+        "roleClarity": 0.63,
+        "continuity": 0.12,
+        "workloadManagement": 0.67
+      },
+      "offense": {
+        "design": 0.64,
+        "pace": 0.49,
+        "passRate": 0.48,
+        "targetConcentration": 0.56,
+        "rbCommittee": 0.51,
+        "teUsage": 0.69,
+        "qbRun": 0.49,
+        "playAction": 0.73,
+        "motion": 0.49,
+        "redZone": 0.72,
+        "aggression": 0.55
+      },
+      "defense": {
+        "design": 0.78,
+        "development": 0.74,
+        "aggression": 0.72,
+        "stability": 0.7
+      },
+      "development": {
+        "QB": 0.636,
+        "RB": 0.691,
+        "WR": 0.632,
+        "TE": 0.678,
+        "DST": 0.737,
+        "K": 0.75
+      }
+    },
+    "BUF": {
+      "team": "BUF",
+      "teamName": "Buffalo Bills",
+      "headCoach": "Joe Brady",
+      "offensiveCoordinator": "Pete Carmichael",
+      "defensiveCoordinator": "Jim Leonhard",
+      "offensivePlayCaller": "Joe Brady",
+      "archetype": "spread",
+      "schemeLabel": "Shotgun spread",
+      "newStaff": false,
+      "evidenceSeasons": 5,
+      "confidence": 0.7,
+      "leadership": {
+        "leadership": 0.65,
+        "adaptability": 0.76,
+        "roleClarity": 0.74,
+        "continuity": 0.55,
+        "workloadManagement": 0.67
+      },
+      "offense": {
+        "design": 0.78,
+        "pace": 0.62,
+        "passRate": 0.63,
+        "targetConcentration": 0.64,
+        "rbCommittee": 0.6,
+        "teUsage": 0.55,
+        "qbRun": 0.59,
+        "playAction": 0.56,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.69
+      },
+      "defense": {
+        "design": 0.78,
+        "development": 0.76,
+        "aggression": 0.76,
+        "stability": 0.71
+      },
+      "development": {
+        "QB": 0.755,
+        "RB": 0.692,
+        "WR": 0.746,
+        "TE": 0.687,
+        "DST": 0.749,
+        "K": 0.826
+      }
+    },
+    "CAR": {
+      "team": "CAR",
+      "teamName": "Carolina Panthers",
+      "headCoach": "Dave Canales",
+      "offensiveCoordinator": "Brad Idzik",
+      "defensiveCoordinator": "Ejiro Evero",
+      "offensivePlayCaller": "Dave Canales",
+      "archetype": "balanced",
+      "schemeLabel": "Balanced play-action",
+      "newStaff": false,
+      "evidenceSeasons": 3,
+      "confidence": 0.62,
+      "leadership": {
+        "leadership": 0.61,
+        "adaptability": 0.63,
+        "roleClarity": 0.65,
+        "continuity": 0.7,
+        "workloadManagement": 0.65
+      },
+      "offense": {
+        "design": 0.61,
+        "pace": 0.53,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.56,
+        "teUsage": 0.63,
+        "qbRun": 0.45,
+        "playAction": 0.7,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.61
+      },
+      "defense": {
+        "design": 0.76,
+        "development": 0.72,
+        "aggression": 0.74,
+        "stability": 0.7
+      },
+      "development": {
+        "QB": 0.642,
+        "RB": 0.642,
+        "WR": 0.638,
+        "TE": 0.646,
+        "DST": 0.714,
+        "K": 0.817
+      }
+    },
+    "CHI": {
+      "team": "CHI",
+      "teamName": "Chicago Bears",
+      "headCoach": "Ben Johnson",
+      "offensiveCoordinator": "Press Taylor",
+      "defensiveCoordinator": "Dennis Allen",
+      "offensivePlayCaller": "Ben Johnson",
+      "archetype": "balanced",
+      "schemeLabel": "Balanced play-action",
+      "newStaff": false,
+      "evidenceSeasons": 4,
+      "confidence": 0.8,
+      "leadership": {
+        "leadership": 0.72,
+        "adaptability": 0.84,
+        "roleClarity": 0.8,
+        "continuity": 0.72,
+        "workloadManagement": 0.7
+      },
+      "offense": {
+        "design": 0.88,
+        "pace": 0.53,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.56,
+        "teUsage": 0.63,
+        "qbRun": 0.45,
+        "playAction": 0.7,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.61
+      },
+      "defense": {
+        "design": 0.82,
+        "development": 0.78,
+        "aggression": 0.78,
+        "stability": 0.74
+      },
+      "development": {
+        "QB": 0.778,
+        "RB": 0.778,
+        "WR": 0.774,
+        "TE": 0.783,
+        "DST": 0.782,
+        "K": 0.872
+      }
+    },
+    "CIN": {
+      "team": "CIN",
+      "teamName": "Cincinnati Bengals",
+      "headCoach": "Zac Taylor",
+      "offensiveCoordinator": "Dan Pitcher",
+      "defensiveCoordinator": "Al Golden",
+      "offensivePlayCaller": "Zac Taylor",
+      "archetype": "spread",
+      "schemeLabel": "Shotgun spread",
+      "newStaff": false,
+      "evidenceSeasons": 7,
+      "confidence": 0.75,
+      "leadership": {
+        "leadership": 0.67,
+        "adaptability": 0.68,
+        "roleClarity": 0.72,
+        "continuity": 0.78,
+        "workloadManagement": 0.62
+      },
+      "offense": {
+        "design": 0.74,
+        "pace": 0.62,
+        "passRate": 0.63,
+        "targetConcentration": 0.64,
+        "rbCommittee": 0.6,
+        "teUsage": 0.55,
+        "qbRun": 0.59,
+        "playAction": 0.56,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.69
+      },
+      "defense": {
+        "design": 0.64,
+        "development": 0.65,
+        "aggression": 0.67,
+        "stability": 0.64
+      },
+      "development": {
+        "QB": 0.731,
+        "RB": 0.668,
+        "WR": 0.723,
+        "TE": 0.664,
+        "DST": 0.65,
+        "K": 0.853
+      }
+    },
+    "CLE": {
+      "team": "CLE",
+      "teamName": "Cleveland Browns",
+      "headCoach": "Todd Monken",
+      "offensiveCoordinator": "Travis Switzer",
+      "defensiveCoordinator": "Mike Rutenberg",
+      "offensivePlayCaller": "Todd Monken",
+      "archetype": "power",
+      "schemeLabel": "Power-run vertical",
+      "newStaff": true,
+      "evidenceSeasons": 6,
+      "confidence": 0.71,
+      "leadership": {
+        "leadership": 0.69,
+        "adaptability": 0.76,
+        "roleClarity": 0.7,
+        "continuity": 0.12,
+        "workloadManagement": 0.66
+      },
+      "offense": {
+        "design": 0.79,
+        "pace": 0.49,
+        "passRate": 0.48,
+        "targetConcentration": 0.56,
+        "rbCommittee": 0.51,
+        "teUsage": 0.69,
+        "qbRun": 0.49,
+        "playAction": 0.73,
+        "motion": 0.49,
+        "redZone": 0.72,
+        "aggression": 0.55
+      },
+      "defense": {
+        "design": 0.66,
+        "development": 0.67,
+        "aggression": 0.69,
+        "stability": 0.63
+      },
+      "development": {
+        "QB": 0.707,
+        "RB": 0.762,
+        "WR": 0.703,
+        "TE": 0.749,
+        "DST": 0.67,
+        "K": 0.773
+      }
+    },
+    "DAL": {
+      "team": "DAL",
+      "teamName": "Dallas Cowboys",
+      "headCoach": "Brian Schottenheimer",
+      "offensiveCoordinator": "Klayton Adams",
+      "defensiveCoordinator": "Christian Parker",
+      "offensivePlayCaller": "Brian Schottenheimer",
+      "archetype": "balanced",
+      "schemeLabel": "Balanced play-action",
+      "newStaff": false,
+      "evidenceSeasons": 4,
+      "confidence": 0.62,
+      "leadership": {
+        "leadership": 0.61,
+        "adaptability": 0.6,
+        "roleClarity": 0.64,
+        "continuity": 0.68,
+        "workloadManagement": 0.64
+      },
+      "offense": {
+        "design": 0.62,
+        "pace": 0.53,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.56,
+        "teUsage": 0.63,
+        "qbRun": 0.45,
+        "playAction": 0.7,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.61
+      },
+      "defense": {
+        "design": 0.62,
+        "development": 0.65,
+        "aggression": 0.64,
+        "stability": 0.65
+      },
+      "development": {
+        "QB": 0.642,
+        "RB": 0.642,
+        "WR": 0.638,
+        "TE": 0.646,
+        "DST": 0.636,
+        "K": 0.812
+      }
+    },
+    "DEN": {
+      "team": "DEN",
+      "teamName": "Denver Broncos",
+      "headCoach": "Sean Payton",
+      "offensiveCoordinator": "Davis Webb",
+      "defensiveCoordinator": "Vance Joseph",
+      "offensivePlayCaller": "Sean Payton",
+      "archetype": "balanced",
+      "schemeLabel": "Balanced play-action",
+      "newStaff": false,
+      "evidenceSeasons": 12,
+      "confidence": 0.88,
+      "leadership": {
+        "leadership": 0.82,
+        "adaptability": 0.8,
+        "roleClarity": 0.82,
+        "continuity": 0.83,
+        "workloadManagement": 0.74
+      },
+      "offense": {
+        "design": 0.84,
+        "pace": 0.53,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.56,
+        "teUsage": 0.63,
+        "qbRun": 0.45,
+        "playAction": 0.7,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.61
+      },
+      "defense": {
+        "design": 0.85,
+        "development": 0.8,
+        "aggression": 0.84,
+        "stability": 0.79
+      },
+      "development": {
+        "QB": 0.766,
+        "RB": 0.766,
+        "WR": 0.762,
+        "TE": 0.771,
+        "DST": 0.817,
+        "K": 0.908
+      }
+    },
+    "DET": {
+      "team": "DET",
+      "teamName": "Detroit Lions",
+      "headCoach": "Dan Campbell",
+      "offensiveCoordinator": "Drew Petzing",
+      "defensiveCoordinator": "Kelvin Sheppard",
+      "offensivePlayCaller": "Drew Petzing",
+      "archetype": "power",
+      "schemeLabel": "Power-run vertical",
+      "newStaff": false,
+      "evidenceSeasons": 7,
+      "confidence": 0.78,
+      "leadership": {
+        "leadership": 0.86,
+        "adaptability": 0.76,
+        "roleClarity": 0.82,
+        "continuity": 0.55,
+        "workloadManagement": 0.76
+      },
+      "offense": {
+        "design": 0.72,
+        "pace": 0.49,
+        "passRate": 0.48,
+        "targetConcentration": 0.56,
+        "rbCommittee": 0.51,
+        "teUsage": 0.69,
+        "qbRun": 0.49,
+        "playAction": 0.73,
+        "motion": 0.49,
+        "redZone": 0.72,
+        "aggression": 0.55
+      },
+      "defense": {
+        "design": 0.71,
+        "development": 0.76,
+        "aggression": 0.77,
+        "stability": 0.72
+      },
+      "development": {
+        "QB": 0.694,
+        "RB": 0.749,
+        "WR": 0.69,
+        "TE": 0.736,
+        "DST": 0.761,
+        "K": 0.881
+      }
+    },
+    "GB": {
+      "team": "GB",
+      "teamName": "Green Bay Packers",
+      "headCoach": "Matt LaFleur",
+      "offensiveCoordinator": "Adam Stenavich",
+      "defensiveCoordinator": "Jonathan Gannon",
+      "offensivePlayCaller": "Matt LaFleur",
+      "archetype": "shanahan",
+      "schemeLabel": "Wide-zone play action",
+      "newStaff": false,
+      "evidenceSeasons": 7,
+      "confidence": 0.85,
+      "leadership": {
+        "leadership": 0.78,
+        "adaptability": 0.8,
+        "roleClarity": 0.78,
+        "continuity": 0.84,
+        "workloadManagement": 0.69
+      },
+      "offense": {
+        "design": 0.84,
+        "pace": 0.55,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.61,
+        "teUsage": 0.64,
+        "qbRun": 0.43,
+        "playAction": 0.78,
+        "motion": 0.84,
+        "redZone": 0.67,
+        "aggression": 0.62
+      },
+      "defense": {
+        "design": 0.75,
+        "development": 0.72,
+        "aggression": 0.76,
+        "stability": 0.7
+      },
+      "development": {
+        "QB": 0.78,
+        "RB": 0.788,
+        "WR": 0.763,
+        "TE": 0.784,
+        "DST": 0.737,
+        "K": 0.893
+      }
+    },
+    "HOU": {
+      "team": "HOU",
+      "teamName": "Houston Texans",
+      "headCoach": "DeMeco Ryans",
+      "offensiveCoordinator": "Nick Caley",
+      "defensiveCoordinator": "Matt Burke",
+      "offensivePlayCaller": "Nick Caley",
+      "archetype": "mcvay",
+      "schemeLabel": "Motion-heavy condensed spread",
+      "newStaff": false,
+      "evidenceSeasons": 4,
+      "confidence": 0.7,
+      "leadership": {
+        "leadership": 0.8,
+        "adaptability": 0.68,
+        "roleClarity": 0.7,
+        "continuity": 0.74,
+        "workloadManagement": 0.73
+      },
+      "offense": {
+        "design": 0.65,
+        "pace": 0.57,
+        "passRate": 0.59,
+        "targetConcentration": 0.7,
+        "rbCommittee": 0.55,
+        "teUsage": 0.54,
+        "qbRun": 0.34,
+        "playAction": 0.79,
+        "motion": 0.86,
+        "redZone": 0.7,
+        "aggression": 0.66
+      },
+      "defense": {
+        "design": 0.8,
+        "development": 0.79,
+        "aggression": 0.76,
+        "stability": 0.77
+      },
+      "development": {
+        "QB": 0.72,
+        "RB": 0.687,
+        "WR": 0.729,
+        "TE": 0.661,
+        "DST": 0.794,
+        "K": 0.867
+      }
+    },
+    "IND": {
+      "team": "IND",
+      "teamName": "Indianapolis Colts",
+      "headCoach": "Shane Steichen",
+      "offensiveCoordinator": "Jim Bob Cooter",
+      "defensiveCoordinator": "Lou Anarumo",
+      "offensivePlayCaller": "Shane Steichen",
+      "archetype": "spread",
+      "schemeLabel": "Shotgun spread",
+      "newStaff": false,
+      "evidenceSeasons": 6,
+      "confidence": 0.78,
+      "leadership": {
+        "leadership": 0.72,
+        "adaptability": 0.77,
+        "roleClarity": 0.72,
+        "continuity": 0.8,
+        "workloadManagement": 0.66
+      },
+      "offense": {
+        "design": 0.76,
+        "pace": 0.62,
+        "passRate": 0.63,
+        "targetConcentration": 0.64,
+        "rbCommittee": 0.6,
+        "teUsage": 0.55,
+        "qbRun": 0.59,
+        "playAction": 0.56,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.69
+      },
+      "defense": {
+        "design": 0.79,
+        "development": 0.75,
+        "aggression": 0.8,
+        "stability": 0.75
+      },
+      "development": {
+        "QB": 0.754,
+        "RB": 0.691,
+        "WR": 0.745,
+        "TE": 0.687,
+        "DST": 0.756,
+        "K": 0.864
+      }
+    },
+    "JAX": {
+      "team": "JAX",
+      "teamName": "Jacksonville Jaguars",
+      "headCoach": "Liam Coen",
+      "offensiveCoordinator": "Grant Udinski",
+      "defensiveCoordinator": "Anthony Campanile",
+      "offensivePlayCaller": "Liam Coen",
+      "archetype": "mcvay",
+      "schemeLabel": "Motion-heavy condensed spread",
+      "newStaff": false,
+      "evidenceSeasons": 4,
+      "confidence": 0.76,
+      "leadership": {
+        "leadership": 0.7,
+        "adaptability": 0.76,
+        "roleClarity": 0.74,
+        "continuity": 0.67,
+        "workloadManagement": 0.67
+      },
+      "offense": {
+        "design": 0.8,
+        "pace": 0.57,
+        "passRate": 0.59,
+        "targetConcentration": 0.7,
+        "rbCommittee": 0.55,
+        "teUsage": 0.54,
+        "qbRun": 0.34,
+        "playAction": 0.79,
+        "motion": 0.86,
+        "redZone": 0.7,
+        "aggression": 0.66
+      },
+      "defense": {
+        "design": 0.7,
+        "development": 0.72,
+        "aggression": 0.73,
+        "stability": 0.68
+      },
+      "development": {
+        "QB": 0.779,
+        "RB": 0.745,
+        "WR": 0.787,
+        "TE": 0.72,
+        "DST": 0.712,
+        "K": 0.849
+      }
+    },
+    "KC": {
+      "team": "KC",
+      "teamName": "Kansas City Chiefs",
+      "headCoach": "Andy Reid",
+      "offensiveCoordinator": "Eric Bieniemy",
+      "defensiveCoordinator": "Steve Spagnuolo",
+      "offensivePlayCaller": "Andy Reid",
+      "archetype": "reid",
+      "schemeLabel": "West Coast spread",
+      "newStaff": false,
+      "evidenceSeasons": 20,
+      "confidence": 0.95,
+      "leadership": {
+        "leadership": 0.94,
+        "adaptability": 0.92,
+        "roleClarity": 0.9,
+        "continuity": 0.92,
+        "workloadManagement": 0.8
+      },
+      "offense": {
+        "design": 0.93,
+        "pace": 0.59,
+        "passRate": 0.64,
+        "targetConcentration": 0.72,
+        "rbCommittee": 0.65,
+        "teUsage": 0.84,
+        "qbRun": 0.46,
+        "playAction": 0.68,
+        "motion": 0.8,
+        "redZone": 0.8,
+        "aggression": 0.76
+      },
+      "defense": {
+        "design": 0.92,
+        "development": 0.84,
+        "aggression": 0.92,
+        "stability": 0.88
+      },
+      "development": {
+        "QB": 0.892,
+        "RB": 0.791,
+        "WR": 0.833,
+        "TE": 0.9,
+        "DST": 0.877,
+        "K": 0.958
+      }
+    },
+    "LAC": {
+      "team": "LAC",
+      "teamName": "Los Angeles Chargers",
+      "headCoach": "Jim Harbaugh",
+      "offensiveCoordinator": "Mike McDaniel",
+      "defensiveCoordinator": "Chris O'Leary",
+      "offensivePlayCaller": "Mike McDaniel",
+      "archetype": "shanahan",
+      "schemeLabel": "Wide-zone play action",
+      "newStaff": false,
+      "evidenceSeasons": 10,
+      "confidence": 0.86,
+      "leadership": {
+        "leadership": 0.9,
+        "adaptability": 0.84,
+        "roleClarity": 0.82,
+        "continuity": 0.45,
+        "workloadManagement": 0.82
+      },
+      "offense": {
+        "design": 0.88,
+        "pace": 0.55,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.61,
+        "teUsage": 0.64,
+        "qbRun": 0.43,
+        "playAction": 0.78,
+        "motion": 0.84,
+        "redZone": 0.67,
+        "aggression": 0.62
+      },
+      "defense": {
+        "design": 0.73,
+        "development": 0.72,
+        "aggression": 0.74,
+        "stability": 0.7
+      },
+      "development": {
+        "QB": 0.81,
+        "RB": 0.818,
+        "WR": 0.793,
+        "TE": 0.814,
+        "DST": 0.75,
+        "K": 0.876
+      }
+    },
+    "LAR": {
+      "team": "LAR",
+      "teamName": "Los Angeles Rams",
+      "headCoach": "Sean McVay",
+      "offensiveCoordinator": "Nate Scheelhaase",
+      "defensiveCoordinator": "Chris Shula",
+      "offensivePlayCaller": "Sean McVay",
+      "archetype": "mcvay",
+      "schemeLabel": "Motion-heavy condensed spread",
+      "newStaff": false,
+      "evidenceSeasons": 9,
+      "confidence": 0.94,
+      "leadership": {
+        "leadership": 0.89,
+        "adaptability": 0.91,
+        "roleClarity": 0.88,
+        "continuity": 0.82,
+        "workloadManagement": 0.75
+      },
+      "offense": {
+        "design": 0.94,
+        "pace": 0.57,
+        "passRate": 0.59,
+        "targetConcentration": 0.7,
+        "rbCommittee": 0.55,
+        "teUsage": 0.54,
+        "qbRun": 0.34,
+        "playAction": 0.79,
+        "motion": 0.86,
+        "redZone": 0.7,
+        "aggression": 0.66
+      },
+      "defense": {
+        "design": 0.76,
+        "development": 0.74,
+        "aggression": 0.73,
+        "stability": 0.75
+      },
+      "development": {
+        "QB": 0.865,
+        "RB": 0.832,
+        "WR": 0.874,
+        "TE": 0.806,
+        "DST": 0.768,
+        "K": 0.932
+      }
+    },
+    "LV": {
+      "team": "LV",
+      "teamName": "Las Vegas Raiders",
+      "headCoach": "Klint Kubiak",
+      "offensiveCoordinator": "Andrew Janocko",
+      "defensiveCoordinator": "Rob Leonard",
+      "offensivePlayCaller": "Klint Kubiak",
+      "archetype": "shanahan",
+      "schemeLabel": "Wide-zone play action",
+      "newStaff": true,
+      "evidenceSeasons": 4,
+      "confidence": 0.65,
+      "leadership": {
+        "leadership": 0.62,
+        "adaptability": 0.68,
+        "roleClarity": 0.67,
+        "continuity": 0.1,
+        "workloadManagement": 0.63
+      },
+      "offense": {
+        "design": 0.74,
+        "pace": 0.55,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.61,
+        "teUsage": 0.64,
+        "qbRun": 0.43,
+        "playAction": 0.78,
+        "motion": 0.84,
+        "redZone": 0.67,
+        "aggression": 0.62
+      },
+      "defense": {
+        "design": 0.66,
+        "development": 0.67,
+        "aggression": 0.68,
+        "stability": 0.61
+      },
+      "development": {
+        "QB": 0.715,
+        "RB": 0.723,
+        "WR": 0.698,
+        "TE": 0.719,
+        "DST": 0.66,
+        "K": 0.751
+      }
+    },
+    "MIA": {
+      "team": "MIA",
+      "teamName": "Miami Dolphins",
+      "headCoach": "Jeff Hafley",
+      "offensiveCoordinator": "Bobby Slowik",
+      "defensiveCoordinator": "Sean Duggan",
+      "offensivePlayCaller": "Bobby Slowik",
+      "archetype": "shanahan",
+      "schemeLabel": "Wide-zone play action",
+      "newStaff": true,
+      "evidenceSeasons": 4,
+      "confidence": 0.61,
+      "leadership": {
+        "leadership": 0.65,
+        "adaptability": 0.66,
+        "roleClarity": 0.62,
+        "continuity": 0.12,
+        "workloadManagement": 0.64
+      },
+      "offense": {
+        "design": 0.69,
+        "pace": 0.55,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.61,
+        "teUsage": 0.64,
+        "qbRun": 0.43,
+        "playAction": 0.78,
+        "motion": 0.84,
+        "redZone": 0.67,
+        "aggression": 0.62
+      },
+      "defense": {
+        "design": 0.72,
+        "development": 0.7,
+        "aggression": 0.71,
+        "stability": 0.65
+      },
+      "development": {
+        "QB": 0.696,
+        "RB": 0.704,
+        "WR": 0.679,
+        "TE": 0.7,
+        "DST": 0.698,
+        "K": 0.748
+      }
+    },
+    "MIN": {
+      "team": "MIN",
+      "teamName": "Minnesota Vikings",
+      "headCoach": "Kevin O'Connell",
+      "offensiveCoordinator": "Wes Phillips",
+      "defensiveCoordinator": "Brian Flores",
+      "offensivePlayCaller": "Kevin O'Connell",
+      "archetype": "mcvay",
+      "schemeLabel": "Motion-heavy condensed spread",
+      "newStaff": false,
+      "evidenceSeasons": 7,
+      "confidence": 0.9,
+      "leadership": {
+        "leadership": 0.84,
+        "adaptability": 0.88,
+        "roleClarity": 0.84,
+        "continuity": 0.86,
+        "workloadManagement": 0.76
+      },
+      "offense": {
+        "design": 0.89,
+        "pace": 0.57,
+        "passRate": 0.59,
+        "targetConcentration": 0.7,
+        "rbCommittee": 0.55,
+        "teUsage": 0.54,
+        "qbRun": 0.34,
+        "playAction": 0.79,
+        "motion": 0.86,
+        "redZone": 0.7,
+        "aggression": 0.66
+      },
+      "defense": {
+        "design": 0.9,
+        "development": 0.82,
+        "aggression": 0.92,
+        "stability": 0.8
+      },
+      "development": {
+        "QB": 0.839,
+        "RB": 0.805,
+        "WR": 0.847,
+        "TE": 0.78,
+        "DST": 0.845,
+        "K": 0.919
+      }
+    },
+    "NE": {
+      "team": "NE",
+      "teamName": "New England Patriots",
+      "headCoach": "Mike Vrabel",
+      "offensiveCoordinator": "Josh McDaniels",
+      "defensiveCoordinator": "Zak Kuhr",
+      "offensivePlayCaller": "Josh McDaniels",
+      "archetype": "balanced",
+      "schemeLabel": "Balanced play-action",
+      "newStaff": false,
+      "evidenceSeasons": 10,
+      "confidence": 0.84,
+      "leadership": {
+        "leadership": 0.88,
+        "adaptability": 0.76,
+        "roleClarity": 0.8,
+        "continuity": 0.67,
+        "workloadManagement": 0.82
+      },
+      "offense": {
+        "design": 0.79,
+        "pace": 0.53,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.56,
+        "teUsage": 0.63,
+        "qbRun": 0.45,
+        "playAction": 0.7,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.61
+      },
+      "defense": {
+        "design": 0.75,
+        "development": 0.77,
+        "aggression": 0.76,
+        "stability": 0.78
+      },
+      "development": {
+        "QB": 0.747,
+        "RB": 0.747,
+        "WR": 0.743,
+        "TE": 0.752,
+        "DST": 0.781,
+        "K": 0.895
+      }
+    },
+    "NO": {
+      "team": "NO",
+      "teamName": "New Orleans Saints",
+      "headCoach": "Kellen Moore",
+      "offensiveCoordinator": "Doug Nussmeier",
+      "defensiveCoordinator": "Brandon Staley",
+      "offensivePlayCaller": "Kellen Moore",
+      "archetype": "spread",
+      "schemeLabel": "Shotgun spread",
+      "newStaff": false,
+      "evidenceSeasons": 6,
+      "confidence": 0.75,
+      "leadership": {
+        "leadership": 0.67,
+        "adaptability": 0.74,
+        "roleClarity": 0.7,
+        "continuity": 0.72,
+        "workloadManagement": 0.65
+      },
+      "offense": {
+        "design": 0.77,
+        "pace": 0.62,
+        "passRate": 0.63,
+        "targetConcentration": 0.64,
+        "rbCommittee": 0.6,
+        "teUsage": 0.55,
+        "qbRun": 0.59,
+        "playAction": 0.56,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.69
+      },
+      "defense": {
+        "design": 0.77,
+        "development": 0.72,
+        "aggression": 0.79,
+        "stability": 0.7
+      },
+      "development": {
+        "QB": 0.75,
+        "RB": 0.687,
+        "WR": 0.742,
+        "TE": 0.683,
+        "DST": 0.726,
+        "K": 0.841
+      }
+    },
+    "NYG": {
+      "team": "NYG",
+      "teamName": "New York Giants",
+      "headCoach": "John Harbaugh",
+      "offensiveCoordinator": "Matt Nagy",
+      "defensiveCoordinator": "Dennard Wilson",
+      "offensivePlayCaller": "Matt Nagy",
+      "archetype": "reid",
+      "schemeLabel": "West Coast spread",
+      "newStaff": true,
+      "evidenceSeasons": 12,
+      "confidence": 0.82,
+      "leadership": {
+        "leadership": 0.9,
+        "adaptability": 0.7,
+        "roleClarity": 0.82,
+        "continuity": 0.1,
+        "workloadManagement": 0.84
+      },
+      "offense": {
+        "design": 0.72,
+        "pace": 0.59,
+        "passRate": 0.64,
+        "targetConcentration": 0.72,
+        "rbCommittee": 0.65,
+        "teUsage": 0.84,
+        "qbRun": 0.46,
+        "playAction": 0.68,
+        "motion": 0.8,
+        "redZone": 0.8,
+        "aggression": 0.76
+      },
+      "defense": {
+        "design": 0.73,
+        "development": 0.74,
+        "aggression": 0.77,
+        "stability": 0.68
+      },
+      "development": {
+        "QB": 0.782,
+        "RB": 0.682,
+        "WR": 0.724,
+        "TE": 0.791,
+        "DST": 0.761,
+        "K": 0.834
+      }
+    },
+    "NYJ": {
+      "team": "NYJ",
+      "teamName": "New York Jets",
+      "headCoach": "Aaron Glenn",
+      "offensiveCoordinator": "Frank Reich",
+      "defensiveCoordinator": "Brian Duker",
+      "offensivePlayCaller": "Frank Reich",
+      "archetype": "balanced",
+      "schemeLabel": "Balanced play-action",
+      "newStaff": false,
+      "evidenceSeasons": 7,
+      "confidence": 0.62,
+      "leadership": {
+        "leadership": 0.6,
+        "adaptability": 0.66,
+        "roleClarity": 0.62,
+        "continuity": 0.3,
+        "workloadManagement": 0.62
+      },
+      "offense": {
+        "design": 0.67,
+        "pace": 0.53,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.56,
+        "teUsage": 0.63,
+        "qbRun": 0.45,
+        "playAction": 0.7,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.61
+      },
+      "defense": {
+        "design": 0.68,
+        "development": 0.7,
+        "aggression": 0.72,
+        "stability": 0.6
+      },
+      "development": {
+        "QB": 0.667,
+        "RB": 0.667,
+        "WR": 0.663,
+        "TE": 0.672,
+        "DST": 0.68,
+        "K": 0.76
+      }
+    },
+    "PHI": {
+      "team": "PHI",
+      "teamName": "Philadelphia Eagles",
+      "headCoach": "Nick Sirianni",
+      "offensiveCoordinator": "Sean Mannion",
+      "defensiveCoordinator": "Vic Fangio",
+      "offensivePlayCaller": "Sean Mannion",
+      "archetype": "spread",
+      "schemeLabel": "Shotgun spread",
+      "newStaff": false,
+      "evidenceSeasons": 5,
+      "confidence": 0.68,
+      "leadership": {
+        "leadership": 0.79,
+        "adaptability": 0.69,
+        "roleClarity": 0.75,
+        "continuity": 0.52,
+        "workloadManagement": 0.73
+      },
+      "offense": {
+        "design": 0.64,
+        "pace": 0.62,
+        "passRate": 0.63,
+        "targetConcentration": 0.64,
+        "rbCommittee": 0.6,
+        "teUsage": 0.55,
+        "qbRun": 0.59,
+        "playAction": 0.56,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.69
+      },
+      "defense": {
+        "design": 0.88,
+        "development": 0.8,
+        "aggression": 0.84,
+        "stability": 0.84
+      },
+      "development": {
+        "QB": 0.704,
+        "RB": 0.641,
+        "WR": 0.696,
+        "TE": 0.637,
+        "DST": 0.82,
+        "K": 0.85
+      }
+    },
+    "PIT": {
+      "team": "PIT",
+      "teamName": "Pittsburgh Steelers",
+      "headCoach": "Mike McCarthy",
+      "offensiveCoordinator": "Brian Angelichio",
+      "defensiveCoordinator": "Patrick Graham",
+      "offensivePlayCaller": "Mike McCarthy",
+      "archetype": "reid",
+      "schemeLabel": "West Coast spread",
+      "newStaff": true,
+      "evidenceSeasons": 15,
+      "confidence": 0.82,
+      "leadership": {
+        "leadership": 0.79,
+        "adaptability": 0.72,
+        "roleClarity": 0.78,
+        "continuity": 0.1,
+        "workloadManagement": 0.72
+      },
+      "offense": {
+        "design": 0.77,
+        "pace": 0.59,
+        "passRate": 0.64,
+        "targetConcentration": 0.72,
+        "rbCommittee": 0.65,
+        "teUsage": 0.84,
+        "qbRun": 0.46,
+        "playAction": 0.68,
+        "motion": 0.8,
+        "redZone": 0.8,
+        "aggression": 0.76
+      },
+      "defense": {
+        "design": 0.76,
+        "development": 0.73,
+        "aggression": 0.78,
+        "stability": 0.7
+      },
+      "development": {
+        "QB": 0.795,
+        "RB": 0.694,
+        "WR": 0.736,
+        "TE": 0.803,
+        "DST": 0.747,
+        "K": 0.806
+      }
+    },
+    "SEA": {
+      "team": "SEA",
+      "teamName": "Seattle Seahawks",
+      "headCoach": "Mike Macdonald",
+      "offensiveCoordinator": "Brian Fleury",
+      "defensiveCoordinator": "Aden Durde",
+      "offensivePlayCaller": "Brian Fleury",
+      "archetype": "shanahan",
+      "schemeLabel": "Wide-zone play action",
+      "newStaff": false,
+      "evidenceSeasons": 4,
+      "confidence": 0.7,
+      "leadership": {
+        "leadership": 0.81,
+        "adaptability": 0.72,
+        "roleClarity": 0.71,
+        "continuity": 0.55,
+        "workloadManagement": 0.77
+      },
+      "offense": {
+        "design": 0.68,
+        "pace": 0.55,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.61,
+        "teUsage": 0.64,
+        "qbRun": 0.43,
+        "playAction": 0.78,
+        "motion": 0.84,
+        "redZone": 0.67,
+        "aggression": 0.62
+      },
+      "defense": {
+        "design": 0.84,
+        "development": 0.81,
+        "aggression": 0.85,
+        "stability": 0.76
+      },
+      "development": {
+        "QB": 0.712,
+        "RB": 0.72,
+        "WR": 0.695,
+        "TE": 0.716,
+        "DST": 0.818,
+        "K": 0.848
+      }
+    },
+    "SF": {
+      "team": "SF",
+      "teamName": "San Francisco 49ers",
+      "headCoach": "Kyle Shanahan",
+      "offensiveCoordinator": "Klay Kubiak",
+      "defensiveCoordinator": "Raheem Morris",
+      "offensivePlayCaller": "Kyle Shanahan",
+      "archetype": "shanahan",
+      "schemeLabel": "Wide-zone play action",
+      "newStaff": false,
+      "evidenceSeasons": 9,
+      "confidence": 0.94,
+      "leadership": {
+        "leadership": 0.82,
+        "adaptability": 0.91,
+        "roleClarity": 0.84,
+        "continuity": 0.88,
+        "workloadManagement": 0.68
+      },
+      "offense": {
+        "design": 0.95,
+        "pace": 0.55,
+        "passRate": 0.55,
+        "targetConcentration": 0.59,
+        "rbCommittee": 0.61,
+        "teUsage": 0.64,
+        "qbRun": 0.43,
+        "playAction": 0.78,
+        "motion": 0.84,
+        "redZone": 0.67,
+        "aggression": 0.62
+      },
+      "defense": {
+        "design": 0.79,
+        "development": 0.75,
+        "aggression": 0.78,
+        "stability": 0.76
+      },
+      "development": {
+        "QB": 0.838,
+        "RB": 0.847,
+        "WR": 0.821,
+        "TE": 0.842,
+        "DST": 0.771,
+        "K": 0.918
+      }
+    },
+    "TB": {
+      "team": "TB",
+      "teamName": "Tampa Bay Buccaneers",
+      "headCoach": "Todd Bowles",
+      "offensiveCoordinator": "Zac Robinson",
+      "defensiveCoordinator": null,
+      "offensivePlayCaller": "Zac Robinson",
+      "archetype": "mcvay",
+      "schemeLabel": "Motion-heavy condensed spread",
+      "newStaff": false,
+      "evidenceSeasons": 6,
+      "confidence": 0.72,
+      "leadership": {
+        "leadership": 0.73,
+        "adaptability": 0.71,
+        "roleClarity": 0.68,
+        "continuity": 0.55,
+        "workloadManagement": 0.67
+      },
+      "offense": {
+        "design": 0.73,
+        "pace": 0.57,
+        "passRate": 0.59,
+        "targetConcentration": 0.7,
+        "rbCommittee": 0.55,
+        "teUsage": 0.54,
+        "qbRun": 0.34,
+        "playAction": 0.79,
+        "motion": 0.86,
+        "redZone": 0.7,
+        "aggression": 0.66
+      },
+      "defense": {
+        "design": 0.8,
+        "development": 0.74,
+        "aggression": 0.82,
+        "stability": 0.75
+      },
+      "development": {
+        "QB": 0.749,
+        "RB": 0.715,
+        "WR": 0.757,
+        "TE": 0.69,
+        "DST": 0.755,
+        "K": 0.827
+      }
+    },
+    "TEN": {
+      "team": "TEN",
+      "teamName": "Tennessee Titans",
+      "headCoach": "Robert Saleh",
+      "offensiveCoordinator": "Brian Daboll",
+      "defensiveCoordinator": "Gus Bradley",
+      "offensivePlayCaller": "Brian Daboll",
+      "archetype": "vertical",
+      "schemeLabel": "Vertical play-action",
+      "newStaff": true,
+      "evidenceSeasons": 8,
+      "confidence": 0.75,
+      "leadership": {
+        "leadership": 0.73,
+        "adaptability": 0.75,
+        "roleClarity": 0.7,
+        "continuity": 0.1,
+        "workloadManagement": 0.68
+      },
+      "offense": {
+        "design": 0.77,
+        "pace": 0.57,
+        "passRate": 0.6,
+        "targetConcentration": 0.67,
+        "rbCommittee": 0.56,
+        "teUsage": 0.55,
+        "qbRun": 0.48,
+        "playAction": 0.7,
+        "motion": 0.57,
+        "redZone": 0.7,
+        "aggression": 0.67
+      },
+      "defense": {
+        "design": 0.73,
+        "development": 0.7,
+        "aggression": 0.72,
+        "stability": 0.71
+      },
+      "development": {
+        "QB": 0.748,
+        "RB": 0.706,
+        "WR": 0.756,
+        "TE": 0.697,
+        "DST": 0.713,
+        "K": 0.777
+      }
+    },
+    "WSH": {
+      "team": "WSH",
+      "teamName": "Washington Commanders",
+      "headCoach": "Dan Quinn",
+      "offensiveCoordinator": "David Blough",
+      "defensiveCoordinator": "Daronte Jones",
+      "offensivePlayCaller": "David Blough",
+      "archetype": "spread",
+      "schemeLabel": "Shotgun spread",
+      "newStaff": false,
+      "evidenceSeasons": 5,
+      "confidence": 0.64,
+      "leadership": {
+        "leadership": 0.82,
+        "adaptability": 0.65,
+        "roleClarity": 0.69,
+        "continuity": 0.5,
+        "workloadManagement": 0.74
+      },
+      "offense": {
+        "design": 0.6,
+        "pace": 0.62,
+        "passRate": 0.63,
+        "targetConcentration": 0.64,
+        "rbCommittee": 0.6,
+        "teUsage": 0.55,
+        "qbRun": 0.59,
+        "playAction": 0.56,
+        "motion": 0.62,
+        "redZone": 0.68,
+        "aggression": 0.69
+      },
+      "defense": {
+        "design": 0.72,
+        "development": 0.71,
+        "aggression": 0.75,
+        "stability": 0.68
+      },
+      "development": {
+        "QB": 0.687,
+        "RB": 0.624,
+        "WR": 0.678,
+        "TE": 0.619,
+        "DST": 0.729,
+        "K": 0.839
+      }
+    }
+  }
+}

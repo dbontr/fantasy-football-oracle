@@ -4,11 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b2f25" />
-  <meta name="description" content="A browser-first fantasy football draft, trade, waiver, and roster assistant." />
+  <meta name="description" content="Advanced fantasy football draft simulations, weekly lineup optimization, waiver analysis, and trade intelligence." />
   <title>Fantasy Football Oracle</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/oracle-icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -30,6 +32,7 @@
       <button class="view-tab" type="button" data-view="connect">Connect</button>
     </nav>
     <div class="top-actions">
+      <button class="button button-ghost" type="button" id="install-app-button" hidden>Install</button>
       <button class="button button-ghost" type="button" id="export-state-button">Export</button>
       <button class="button button-signal" type="button" id="open-setup-button">League setup</button>
     </div>
@@ -70,6 +73,23 @@
           </button>
         </div>
       </div>
+
+      <section class="decision-horizon" aria-labelledby="decision-horizon-title">
+        <div class="decision-horizon-heading">
+          <div><span class="sheet-kicker">Decision horizon</span><h2 id="decision-horizon-title">Now versus your next pick</h2></div>
+          <div class="inline-actions">
+            <span class="simulation-status" id="simulation-status" role="status">Analytical estimate ready</span>
+            <button class="button button-small button-ghost" type="button" id="run-simulation-button">Run 1,000 paths</button>
+          </div>
+        </div>
+        <div class="decision-telemetry">
+          <div><span>Return chance</span><strong id="decision-return-chance">—</strong><small>estimated</small></div>
+          <div><span>Value of drafting now</span><strong id="decision-vona">—</strong><small>VONA</small></div>
+          <div><span>Urgency</span><strong id="decision-urgency">—</strong><small>0–100</small></div>
+          <div><span>Next team pick</span><strong id="decision-next-pick">—</strong><small id="decision-picks-away">—</small></div>
+        </div>
+        <div class="horizon-track" id="draft-horizon-list" aria-label="Draft decision alternatives"></div>
+      </section>
 
       <div class="draft-workspace">
         <section class="sheet panel-player-pool" aria-labelledby="player-pool-title">
@@ -156,10 +176,98 @@
           <p>Use the drafted roster, build one manually, or import your league. The optimizer respects every starter and flex slot.</p>
         </div>
         <div class="view-intro-actions">
+          <label class="week-picker"><span>Analysis week</span><select id="team-week-select" aria-label="Fantasy week"></select></label>
           <button class="button button-ghost" type="button" id="use-draft-roster-button">Use my drafted roster</button>
           <button class="button button-signal" type="button" id="optimize-lineup-button">Optimize lineup</button>
         </div>
       </div>
+
+      <section class="roster-health" aria-labelledby="roster-health-title">
+        <div class="roster-grade-block">
+          <span class="sheet-kicker">Roster strength</span>
+          <strong class="roster-grade" id="roster-health-grade">—</strong>
+          <span id="roster-health-score">Build a roster to analyze it.</span>
+        </div>
+        <div class="roster-health-metrics">
+          <div><span>Week projection</span><strong id="roster-health-projection">—</strong></div>
+          <div><span>Model range</span><strong id="roster-health-range">—</strong></div>
+          <div><span>Season total</span><strong id="roster-health-season">—</strong></div>
+          <div><span>Reliability</span><strong id="roster-health-reliability">—</strong></div>
+        </div>
+        <div class="roster-health-notes" id="roster-health-notes"></div>
+        <div class="position-grades" id="position-grades" aria-labelledby="roster-health-title"></div>
+      </section>
+
+      <section class="coach-intelligence" aria-labelledby="coach-intelligence-title">
+        <div class="coach-intelligence-heading">
+          <div><span class="sheet-kicker">Organizational context</span><h2 id="coach-intelligence-title">Coaching and development edge</h2></div>
+          <span class="live-badge" id="coach-model-status">Coach model loading</span>
+        </div>
+        <div class="coach-intelligence-grid">
+          <div class="coach-summary-card"><span>Projection effect</span><strong id="coach-projection-edge">—</strong><small id="coach-projection-detail">Staff-adjusted roster mean</small></div>
+          <div class="coach-summary-card"><span>Role confidence</span><strong id="coach-role-confidence">—</strong><small>Leadership, continuity, and clarity</small></div>
+          <div class="coach-summary-card"><span>Volatility effect</span><strong id="coach-volatility-edge">—</strong><small>Scheme and staff-change uncertainty</small></div>
+          <div class="coach-summary-card"><span>New-staff exposure</span><strong id="coach-change-exposure">—</strong><small>Roster share under a new regime</small></div>
+        </div>
+        <div class="coach-detail-grid">
+          <div id="coach-staff-exposure" class="coach-staff-exposure"></div>
+          <div id="coach-player-edges" class="coach-player-edges"></div>
+        </div>
+      </section>
+
+      <section class="decision-intelligence" aria-labelledby="decision-intelligence-title">
+        <div class="decision-intelligence-heading">
+          <div><span class="sheet-kicker">Signal synthesis</span><h2 id="decision-intelligence-title">Decision intelligence</h2></div>
+          <span class="live-badge" id="intelligence-model-status">Intelligence loading</span>
+        </div>
+        <div class="decision-intelligence-grid">
+          <div class="intelligence-summary-card"><span>Opportunity certainty</span><strong id="intel-opportunity">—</strong><small>Current role plus historical usage</small></div>
+          <div class="intelligence-summary-card"><span>Active availability</span><strong id="intel-active-availability">—</strong><small>Starter-weighted probability of playing</small></div>
+          <div class="intelligence-summary-card"><span>Return strength</span><strong id="intel-return-level">—</strong><small>Modeled chance of regaining prior level</small></div>
+          <div class="intelligence-summary-card"><span>Recovery exposure</span><strong id="intel-recovery-exposure">—</strong><small>Roster share carrying active health risk</small></div>
+          <div class="intelligence-summary-card"><span>Health confidence</span><strong id="intel-health-confidence">—</strong><small>Report completeness and timetable certainty</small></div>
+          <div class="intelligence-summary-card"><span>Historical share</span><strong id="intel-historical-share">—</strong><small>Starter-weighted team opportunity share</small></div>
+          <div class="intelligence-summary-card"><span>Volume stability</span><strong id="intel-volume-stability">—</strong><small>Week-to-week usage persistence</small></div>
+          <div class="intelligence-summary-card"><span>Regression signal</span><strong id="intel-regression-signal">—</strong><small>Ridge forecast versus source projection</small></div>
+          <div class="intelligence-summary-card"><span>Holdout skill</span><strong id="intel-holdout-skill">—</strong><small>RMSE lift on untouched 2025 outcomes</small></div>
+          <div class="intelligence-summary-card"><span>Ecosystem strength</span><strong id="intel-ecosystem">—</strong><small>Team scoring environment by position</small></div>
+          <div class="intelligence-summary-card"><span>Matchup outlook</span><strong id="intel-matchup">—</strong><small>Selected-week opponent proxy</small></div>
+          <div class="intelligence-summary-card"><span>Roster fragility</span><strong id="intel-fragility">—</strong><small>Role, health, consensus, and volatility</small></div>
+          <div class="intelligence-summary-card"><span>Lineup regret</span><strong id="intel-regret">—</strong><small>Expected points lost to uncertain alternatives</small></div>
+        </div>
+        <div class="intelligence-detail-grid">
+          <div id="intel-opportunity-list" class="intelligence-detail-list"></div>
+          <div id="intel-health-list" class="intelligence-detail-list"></div>
+          <div id="intel-conviction-list" class="intelligence-detail-list"></div>
+          <div id="intel-upside-list" class="intelligence-detail-list"></div>
+          <div id="intel-fragile-list" class="intelligence-detail-list"></div>
+        </div>
+      </section>
+
+      <section class="championship-control" aria-labelledby="championship-control-title">
+        <div class="championship-control-heading">
+          <div>
+            <span class="sheet-kicker">Title-equity command</span>
+            <h2 id="championship-control-title">Championship control center</h2>
+          </div>
+          <div class="inline-actions">
+            <span class="live-badge" id="championship-status">Exact league state required</span>
+            <button class="button button-signal" type="button" id="run-championship-button">Evaluate title equity</button>
+          </div>
+        </div>
+        <div class="championship-control-grid">
+          <div class="championship-summary-card"><span>Platform</span><strong id="champ-platform-state">—</strong><small>Integrity and service readiness</small></div>
+          <div class="championship-summary-card"><span>Artifacts</span><strong id="champ-artifact-state">—</strong><small>Committed model bytes verified</small></div>
+          <div class="championship-summary-card"><span>Recovery</span><strong id="champ-backup-state">—</strong><small>Verified independent package</small></div>
+          <div class="championship-summary-card"><span>Data freshness</span><strong id="champ-freshness-state">—</strong><small>Age of the modeled player pool</small></div>
+          <div class="championship-summary-card"><span>League completeness</span><strong id="champ-league-state">—</strong><small>Rules, standings, rosters, schedule</small></div>
+          <div class="championship-summary-card"><span>Title probability</span><strong id="champ-title-equity">—</strong><small>Paired current-roster baseline</small></div>
+        </div>
+        <div class="championship-body">
+          <div class="championship-readiness" id="championship-readiness"></div>
+          <div class="championship-action-list" id="championship-action-list"></div>
+        </div>
+      </section>
 
       <div class="team-workspace">
         <section class="sheet lineup-sheet" aria-labelledby="lineup-title">
@@ -208,7 +316,12 @@
           <h1>Measure the trade after the lineup changes.</h1>
           <p>The grade combines weekly starter impact, replacement value, depth, injury risk, and deal fairness.</p>
         </div>
-        <button class="button button-ghost" type="button" id="clear-trade-button">Clear trade</button>
+        <div class="view-intro-actions trade-discovery-actions">
+          <label class="week-picker"><span>Trade horizon</span><select id="trade-week-select" aria-label="Trade analysis week"></select></label>
+          <label class="week-picker"><span>Opponent</span><select id="trade-opponent-select" aria-label="Trade opponent"><option value="">Connect a league</option></select></label>
+          <button class="button button-signal" type="button" id="generate-trades-button">Find win-win trades</button>
+          <button class="button button-ghost" type="button" id="clear-trade-button">Clear trade</button>
+        </div>
       </div>
 
       <div class="trade-workspace">
@@ -251,6 +364,15 @@
           <div class="trade-selection" id="trade-receive-selection"></div>
         </section>
       </div>
+      <section class="board trade-proposal-board" aria-labelledby="trade-proposal-title">
+        <div class="board-heading">
+          <div><span class="sheet-kicker">League-fit search</span><h2 id="trade-proposal-title">Generated proposals</h2></div>
+          <span class="live-badge" id="trade-proposal-status">Choose an opponent</span>
+        </div>
+        <div class="trade-proposal-list" id="trade-proposal-list">
+          <div class="empty-state">Import a league with opponent rosters to generate plausible two-sided offers.</div>
+        </div>
+      </section>
     </section>
     <section class="app-view" id="view-connect" data-view-panel="connect" hidden>
       <div class="view-intro">

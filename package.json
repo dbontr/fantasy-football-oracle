@@ -1,14 +1,44 @@
 {
   "name": "fantasy-football-oracle",
-  "version": "1.0.0",
+  "version": "4.0.0",
   "private": true,
-  "description": "Browser-first fantasy football draft, trade, waiver, and roster assistant",
+  "description": "Disaster-resilient native C++ fantasy football championship intelligence with live provenance, recovery, governance, calibration, and league-equity optimization",
   "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
     "build:data": "node scripts/build-player-data.js",
-    "check": "node --check app-core.js && node --check app.js && node --check scripts/build-player-data.js && node --check tools/espn-oracle.user.js",
-    "test": "node --test tests/*.test.js"
+    "check": "node --check app-core.js && node --check app.js && node --check simulation-worker.js && node --check service-worker.js && node --check scripts/build-player-data.js && node --check scripts/build-health-calibration.js && node --check scripts/build-opportunity-profiles.js && node --check scripts/build-coach-profiles.js && node --check server/config.js && node --check server/coaching-model.js && node --check server/health-model.js && node --check server/opportunity-model.js && node --check server/context-intelligence.js && node --check server/engine-blueprint.js && node --check server/projection-model.js && node --check server/data-store.js && node --check server/worker-pool.js && node --check server/compute-worker.js && node --check server/api.js && node --check server/index.js && node --check tools/espn-oracle.user.js && node --check server/native-engine-pool.js && node --check server/hybrid-compute-pool.js && node --check native/build.js && node --check scripts/benchmark-native.js && node --check scripts/build-historical-data.js && node --check scripts/lib/csv.js && node --check scripts/render-historical-report.js && node --check scripts/run-historical-backtests.js && node --check server/historical-backtest.js && node --check server/historical-calibration.js && node --check server/roster-utility.js && node --check scripts/recalibrate-decisions.js && node --check scripts/lib/recovery.js && node --check scripts/generate-asset-manifest.js && node --check scripts/validate-artifacts.js && node --check scripts/generate-sbom.js && node --check scripts/backup-oracle.js && node --check scripts/verify-backup.js && node --check scripts/disaster-recovery-drill.js && node --check server/lineage.js && node --check server/schema-registry.js && node --check server/artifact-registry.js && node --check server/event-store.js && node --check server/snapshot-catalog.js && node --check server/decision-ledger.js && node --check server/resilience.js && node --check server/observability.js && node --check server/league-state.js && node --check server/championship-optimizer.js && node --check server/model-registry.js && node --check server/drift-monitor.js && node --check server/platform-control-plane.js && node --check scripts/prune-backups.js && node --check scripts/repair-event-store.js",
+    "test": "node --test tests/*.test.js",
+    "verify": "npm run verify:offline && npm audit --audit-level=high",
+    "build:native": "node native/build.js",
+    "pretest": "npm run build:native",
+    "benchmark:native": "node scripts/benchmark-native.js",
+    "build:coaches": "node scripts/build-coach-profiles.js",
+    "build:history": "node scripts/build-historical-data.js",
+    "backtest:history": "node scripts/run-historical-backtests.js",
+    "report:history": "node scripts/render-historical-report.js",
+    "calibrate:decisions": "node scripts/recalibrate-decisions.js",
+    "build:opportunity": "node scripts/build-opportunity-profiles.js",
+    "build:health": "node scripts/build-health-calibration.js",
+    "build:sbom": "node scripts/generate-sbom.js",
+    "manifest:generate": "npm run build:sbom && node scripts/generate-asset-manifest.js",
+    "artifacts:validate": "node scripts/validate-artifacts.js",
+    "backup": "node scripts/backup-oracle.js",
+    "backup:verify": "node scripts/verify-backup.js",
+    "recovery:drill": "node scripts/disaster-recovery-drill.js",
+    "recovery:full": "node scripts/disaster-recovery-drill.js --full",
+    "verify:offline": "npm run check && npm test && npm run artifacts:validate",
+    "backup:prune": "node scripts/prune-backups.js",
+    "events:repair": "node scripts/repair-event-store.js"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@fastify/compress": "^9.1.0",
+    "@fastify/helmet": "^13.1.0",
+    "@fastify/rate-limit": "^11.2.0",
+    "@fastify/static": "^10.1.2",
+    "fastify": "^5.11.0"
   }
 }

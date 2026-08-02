@@ -109,3 +109,124 @@ test("waiver analysis identifies the best add and drop pair", () => {
   assert.equal(suggestions[0].drop.id, "weak");
   assert.ok(suggestions[0].score > 0);
 });
+
+test("week projections respect schedule-specific values and bye weeks", () => {
+  const weekly = player("weekly", "RB", 12, {
+    weeklyProjections: [18, 16, 0, 15],
+    byeWeek: 3,
+  });
+  assert.equal(core.playerWeekProjection(weekly, 1), 18);
+  assert.equal(core.playerWeekProjection(weekly, 3), 0);
+  assert.equal(core.playerWeekProjection(weekly, 9), 12);
+});
+
+test("conditional availability falls as the target pick gets later", () => {
+  const early = player("early", "WR", 18, { adp: 8, rank: 8 });
+  const later = player("later", "WR", 16, { adp: 40, rank: 40 });
+  const earlyChance = core.conditionalAvailability(early, 5, 20, settings);
+  const laterChance = core.conditionalAvailability(later, 5, 20, settings);
+  assert.ok(earlyChance >= 0 && earlyChance <= 1);
+  assert.ok(laterChance >= 0 && laterChance <= 1);
+  assert.ok(laterChance > earlyChance);
+  assert.ok(core.conditionalAvailability(later, 5, 30, settings) < laterChance);
+});
+
+test("seeded draft-window simulation is deterministic", () => {
+  const pool = Array.from({ length: 36 }, (_, index) => {
+    const position = ["RB", "WR", "QB", "TE"][index % 4];
+    return player(`p${index + 1}`, position, 22 - index * 0.25, {
+      adp: index + 1,
+      rank: index + 1,
+    });
+  });
+  const state = core.createDraftState(settings);
+  const first = core.simulatePickWindow({
+    players: pool,
+    state,
+    settings,
+    targetTeamId: 2,
+    simulations: 120,
+    seed: 2026,
+  });
+  const second = core.simulatePickWindow({
+    players: pool,
+    state,
+    settings,
+    targetTeamId: 2,
+    simulations: 120,
+    seed: 2026,
+  });
+  assert.deepEqual(first.availabilityById, second.availabilityById);
+  assert.equal(first.simulations, 120);
+  assert.ok(first.targetPick > first.currentPick);
+  Object.values(first.availabilityById).forEach((value) => {
+    assert.ok(value >= 0 && value <= 1);
+  });
+});
+
+test("advanced draft recommendations surface return chance and VONA", () => {
+  const pool = [
+    player("scarce-rb", "RB", 20, { adp: 6, rank: 6 }),
+    player("deep-wr", "WR", 19, { adp: 30, rank: 30 }),
+    player("rb2", "RB", 13, { adp: 45, rank: 45 }),
+    player("wr2", "WR", 18, { adp: 34, rank: 34 }),
+    player("qb1", "QB", 18, { adp: 35, rank: 35 }),
+    player("te1", "TE", 12, { adp: 50, rank: 50 }),
+  ];
+  const state = core.createDraftState(settings);
+  state.rosters["2"] = [];
+  const recommendations = core.advancedDraftRecommendations(
+    pool,
+    state,
+    settings,
+    2,
+    5,
+  );
+  assert.equal(recommendations[0].id, "scarce-rb");
+  assert.ok(Number.isFinite(recommendations[0].vona));
+  assert.ok(recommendations[0].returnChance >= 0 && recommendations[0].returnChance <= 1);
+  assert.match(recommendations[0].decision, /draft|priority|value/i);
+});
+
+test("weekly roster analysis detects bye conflicts and produces a range", () => {
+  const roster = [
+    player("qb", "QB", 20, { weeklyProjections: [20, 0], byeWeek: 2, floorProjection: 14, ceilingProjection: 29 }),
+    player("rb1", "RB", 18, { weeklyProjections: [18, 0], byeWeek: 2, floorProjection: 10, ceilingProjection: 28 }),
+    player("rb2", "RB", 15, { weeklyProjections: [15, 15], floorProjection: 8, ceilingProjection: 24 }),
+    player("wr1", "WR", 17, { weeklyProjections: [17, 17], floorProjection: 9, ceilingProjection: 27 }),
+    player("wr2", "WR", 14, { weeklyProjections: [14, 14], floorProjection: 7, ceilingProjection: 23 }),
+    player("te", "TE", 10, { weeklyProjections: [10, 10], floorProjection: 5, ceilingProjection: 17 }),
+    player("bench", "RB", 9, { weeklyProjections: [9, 9] }),
+  ];
+  const analysis = core.analyzeRoster({ roster, players: roster, settings, week: 2 });
+  assert.equal(analysis.week, 2);
+  assert.ok(analysis.byePlayers.length >= 2);
+  assert.ok(analysis.ceiling >= analysis.floor);
+  assert.ok(analysis.strengthScore >= 0 && analysis.strengthScore <= 100);
+});
+
+test("trade generator returns proposals evaluated for both teams", () => {
+  const userRoster = [
+    player("uqb", "QB", 20), player("urb1", "RB", 18), player("urb2", "RB", 11),
+    player("uwr1", "WR", 18), player("uwr2", "WR", 15), player("ute", "TE", 9),
+    player("urb3", "RB", 10), player("uwr3", "WR", 8),
+  ];
+  const opponentRoster = [
+    player("oqb", "QB", 19), player("orb1", "RB", 17), player("orb2", "RB", 15),
+    player("owr1", "WR", 20), player("owr2", "WR", 11), player("ote", "TE", 12),
+    player("owr3", "WR", 10), player("orb3", "RB", 8),
+  ];
+  const proposals = core.generateTradeProposals({
+    userRoster,
+    opponentRoster,
+    players: [...userRoster, ...opponentRoster],
+    settings,
+    limit: 8,
+  });
+  assert.ok(Array.isArray(proposals));
+  proposals.forEach((proposal) => {
+    assert.ok(proposal.userAnalysis);
+    assert.ok(proposal.opponentAnalysis);
+    assert.ok(proposal.fairness >= 0 && proposal.fairness <= 100);
+  });
+});
