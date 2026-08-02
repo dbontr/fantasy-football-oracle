@@ -16,6 +16,6 @@ Secrets must be supplied through environment variables or the hosting platform's
 
 ## Administrative surfaces
 
-Detailed metrics, artifact manifests, event history, decision records, model promotion, rollback, drift writes, and manual refresh are restricted to local access unless an administrator credential is configured. Public health output intentionally removes absolute filesystem paths and replica destinations.
+Detailed metrics, artifact manifests, event history, decision records, model promotion, rollback, drift writes, and manual refresh are restricted to direct loopback access unless an administrator credential is configured. Requests carrying proxy-forwarding headers always require `ORACLE_ADMIN_TOKEN`, even when the proxy socket is loopback. Public health output intentionally removes absolute filesystem paths and replica destinations; `/api/ready` provides the smaller production probe.
 
-Use TLS at the reverse proxy, restrict allowed origins and networks, rotate credentials after a recovery event, and require multi-factor authentication on source, deployment, backup, and secret-management accounts.
+Use TLS at the reverse proxy, restrict allowed origins and networks, rotate credentials after a recovery event, and require multi-factor authentication on source, deployment, backup, and secret-management accounts. Administrative and error responses are marked `no-store`; internal server failures are logged with a request ID and are not returned verbatim to clients.

@@ -11,7 +11,7 @@ Fantasy Football Oracle is a native C++/Node.js application. Fastify serves the 
 - A writable runtime-data directory.
 - Outbound HTTPS access to ESPN and Sleeper public endpoints.
 
-The process listens on the platform-provided `PORT` and `0.0.0.0` by default. Readiness and native-engine state are available at `/api/health`.
+The process listens on the platform-provided `PORT` and `0.0.0.0` by default. Use the minimal `GET /api/ready` response for readiness probes; use `GET /api/health` for detailed native-engine and control-plane telemetry.
 
 ## Local production run
 
@@ -60,12 +60,16 @@ The included multi-stage Dockerfile:
 2. compiles the Linux C++20 executable,
 3. installs production Node dependencies in a separate stage,
 4. copies only the executable and application into the runtime image,
-5. installs `libstdc++`, runs as the unprivileged `node` user, and enables a health check.
+5. installs `libstdc++`, runs as the unprivileged `node` user, enables strict artifact integrity, and checks `/api/ready`.
 
 ```bash
 docker build -t fantasy-football-oracle .
 docker run --rm \
   --name fantasy-football-oracle \
+  --read-only \
+  --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+  --cap-drop ALL \
+  --security-opt no-new-privileges:true \
   -p 8787:8787 \
   -e ORACLE_NATIVE_WORKERS=4 \
   -e ORACLE_WORKERS=2 \
@@ -74,8 +78,9 @@ docker run --rm \
   fantasy-football-oracle
 ```
 
-The development machine used for this implementation does not have Docker installed, so the image was not locally built. The Docker build path is exercised by the Linux deployment workflow and should be built in CI before production promotion.
-For a reverse proxy, terminate TLS at the proxy, set `ORACLE_TRUST_PROXY=true`, forward the original host/protocol/client-IP headers, and keep the browser shell and `/api` on the same origin.
+The CI workflow builds and runs the image with a read-only root filesystem, dropped capabilities, `no-new-privileges`, and strict production smoke validation before promotion.
+
+For a reverse proxy, terminate TLS at the proxy, set `ORACLE_TRUST_PROXY=true`, forward the original host/protocol/client-IP headers, and keep the browser shell and `/api` on the same origin. Configure `ORACLE_ADMIN_TOKEN`: every forwarded administrative request requires the bearer token, even when the proxy connects over loopback.
 
 ## Azure App Service source deployment
 
@@ -104,6 +109,8 @@ az webapp config appsettings set \
   --settings \
     ORACLE_RUNTIME_DIR=/home/oracle-runtime \
     ORACLE_NATIVE_REQUIRED=true \
+    ORACLE_STRICT_ARTIFACT_INTEGRITY=true \
+    ORACLE_ADMIN_TOKEN=<secret> \
     ORACLE_NATIVE_WORKERS=2 \
     ORACLE_WORKERS=1 \
     ORACLE_DEFAULT_SIMULATIONS=15000 \
@@ -130,6 +137,8 @@ Mount persistent storage at `/home/oracle-runtime` and set:
 PORT=8787
 ORACLE_RUNTIME_DIR=/home/oracle-runtime
 ORACLE_NATIVE_REQUIRED=true
+ORACLE_STRICT_ARTIFACT_INTEGRITY=true
+ORACLE_ADMIN_TOKEN=<secret>
 ORACLE_NATIVE_WORKERS=2
 ORACLE_WORKERS=1
 ORACLE_DEFAULT_SIMULATIONS=15000
@@ -138,6 +147,8 @@ ORACLE_TRUST_PROXY=true
 ```
 
 ## Health and operations
+
+`GET /api/ready` returns a small no-store readiness document. It returns HTTP 503 when player data is unavailable, required native workers are unavailable, strict artifact integrity fails, or the event chain is invalid. It intentionally excludes detailed model, event, and backup state.
 
 `GET /api/health` reports:
 
@@ -174,9 +185,10 @@ Browser draft, roster, trade, and connection state live in browser storage. Expo
 Scheduled refreshes require no credential. `POST /api/data/refresh` is protected:
 
 - with `ORACLE_ADMIN_TOKEN`, callers send `Authorization: Bearer <token>`;
-- without a token, manual refresh is accepted only from loopback.
+- without a token, administrative calls are accepted only from a direct loopback socket;
+- any request containing standard proxy-forwarding headers requires the token, even when the proxy socket is loopback.
 
-Store the token in the hosting secret store, never in the repository.
+Successful administrative responses and all error responses are marked `Cache-Control: no-store`. Internal 5xx details remain in structured logs; callers receive a generic message and a request ID for correlation. Store the token in the hosting secret store, never in the repository.
 
 ## Version 4.0 control plane
 

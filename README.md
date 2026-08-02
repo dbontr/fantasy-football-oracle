@@ -229,11 +229,13 @@ npm run check
 npm test
 npm run benchmark:native
 npm start
+npm run smoke:production -- --base http://127.0.0.1:8787 --strict
 npm run dev
 ```
 
 Useful endpoints:
 
+- `GET /api/ready`
 - `GET /api/health`
 - `GET /api/data/status`
 - `GET /api/data/players`
@@ -265,7 +267,7 @@ Useful endpoints:
 - `GET /api/championship/status`
 - `POST /api/championship/evaluate`
 
-Health telemetry identifies whether requests are using native C++, reports feed lineage, integrity, snapshots, model governance, drift, recovery age, queue health, and SLO state. Detailed metrics, manifests, event history, decision history, and model-control writes require local or authenticated administrative access.
+`GET /api/ready` is the minimal no-store readiness probe used by containers and load balancers. Detailed `/api/health` telemetry identifies whether requests are using native C++, reports feed lineage, integrity, snapshots, model governance, drift, recovery age, queue health, and SLO state. Detailed metrics, manifests, event history, decision history, and model-control writes require local or authenticated administrative access.
 
 ## Data and league connections
 
@@ -300,7 +302,7 @@ ORACLE_TASK_TIMEOUT_MS=45000
 
 Production containers set `ORACLE_NATIVE_REQUIRED=true`. Local development can leave it false to retain JavaScript fallback when a compiler or binary is unavailable.
 
-Manual data refresh is restricted to loopback requests unless `ORACLE_ADMIN_TOKEN` is configured. Scheduled refreshes continue automatically.
+Administrative requests are accepted without `ORACLE_ADMIN_TOKEN` only from a direct loopback socket. Any request carrying proxy-forwarding headers requires the bearer token, preventing a proxy or client from spoofing loopback access. Scheduled refreshes continue automatically.
 
 ## Privacy and security
 
@@ -311,15 +313,16 @@ Manual data refresh is restricted to loopback requests unless `ORACLE_ADMIN_TOKE
 - Native worker crashes are isolated and workers are restarted.
 - Static serving uses an allowlist and does not expose server source or environment files.
 - Security headers, same-origin APIs, compression, ETags, and atomic cache replacement are enabled.
+- Administrative responses are marked `no-store`; internal 5xx details remain in logs while clients receive a request ID and a generic message.
 - Exported Oracle JSON can contain private league information and should be protected.
 
 ## Deployment
 
-The Dockerfile builds the C++ engine in a dedicated Alpine builder stage, installs only the runtime C++ library in the final image, and requires native startup. The Azure workflow installs GCC, verifies the native and Node layers, packages the Linux executable, removes compiler-only sources, and deploys the production artifact.
+The Dockerfile builds the C++ engine in a dedicated Alpine builder stage, installs only the runtime C++ library in the final image, requires native startup and strict artifact integrity, and exposes `/api/ready` as its health check. The Azure workflow installs GCC, verifies the native and Node layers, packages the Linux executable, removes compiler-only sources, and deploys the production artifact.
 
 See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for Docker, Azure App Service, persistent storage, environment configuration, health checks, logs, rollback, and recovery.
 
-Docker was not available on the Windows development machine, so the container definition is covered by source review and the native Linux build path in CI rather than a local Docker build.
+CI builds and starts the production container, runs it with a read-only root filesystem, dropped Linux capabilities, and `no-new-privileges`, then executes the strict readiness and browser-shell smoke test.
 
 ## Verification
 
@@ -350,8 +353,9 @@ Verification currently covers:
 - ideal-engine blueprint coverage and readiness reporting
 - client/server syntax and dependency audit
 - Linux and Windows CI verification, including native build caching and recovery restore
+- proxy-safe administrative authorization, sanitized error responses, readiness semantics, and hardened production-container smoke testing
 
-The current suite contains 103 passing tests, including health and recovery intelligence, coaching intelligence, contextual factor centering, uncertainty decomposition, native expected regret, model-readiness reporting, dataset preload, and crash-reload recovery.
+The current suite contains 122 passing tests, including health and recovery intelligence, coaching intelligence, contextual factor centering, uncertainty decomposition, native expected regret, model-readiness reporting, dataset preload, and crash-reload recovery.
 
 ## Repository layout
 

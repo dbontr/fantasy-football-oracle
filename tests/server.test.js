@@ -519,8 +519,82 @@ test("manual server refresh requires the configured admin token", async (context
   const authorized = await server.inject({
     method: "POST",
     url: "/api/data/refresh",
-    headers: { authorization: "Bearer test-secret" },
+    headers: { authorization: "bEaReR test-secret" },
   });
   assert.equal(authorized.statusCode, 200);
+  assert.equal(authorized.headers["cache-control"], "no-store");
   assert.equal(authorized.json().refreshed, true);
+});
+
+test("readiness route exposes a minimal no-store production probe", async (context) => {
+  const services = fakeServices();
+  const server = await buildServer({
+    logger: false,
+    dataStore: services.dataStore,
+    pool: services.pool,
+  });
+  context.after(() => server.close());
+
+  const response = await server.inject({ method: "GET", url: "/api/ready" });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers["cache-control"], "no-store");
+  const payload = response.json();
+  assert.equal(payload.ready, true);
+  assert.equal(payload.status, "ready");
+  assert.equal(payload.dataReady, true);
+  assert.equal(payload.players, services.dataset.players.length);
+  assert.equal(payload.dataSource, "test");
+  assert.equal(payload.nativeRequired, false);
+  assert.equal(payload.nativeAvailable, null);
+  assert.equal(payload.readyWorkers, 2);
+  assert.equal(payload.strictArtifacts, false);
+  assert.equal(typeof payload.artifactValid, "boolean");
+  assert.equal(payload.eventChainValid, true);
+  assert.deepEqual(payload.failures, []);
+});
+
+test("server errors are correlated without leaking internal details", async (context) => {
+  const services = fakeServices();
+  const server = await buildServer({
+    logger: false,
+    dataStore: services.dataStore,
+    pool: services.pool,
+  });
+  server.get("/api/test/internal-error", async () => {
+    const error = new Error("C:\\private\\model-registry.json failed");
+    error.code = "TEST_INTERNAL_FAILURE";
+    throw error;
+  });
+  context.after(() => server.close());
+
+  const response = await server.inject({ method: "GET", url: "/api/test/internal-error" });
+  const payload = response.json();
+  assert.equal(response.statusCode, 500);
+  assert.equal(response.headers["cache-control"], "no-store");
+  assert.equal(payload.error, "Server Error");
+  assert.equal(payload.code, "TEST_INTERNAL_FAILURE");
+  assert.equal(payload.message, "The Oracle server could not complete the request.");
+  assert.equal(typeof payload.requestId, "string");
+  assert.equal(JSON.stringify(payload).includes("private"), false);
+});
+
+test("trusted proxy headers cannot spoof loopback admin access", async (context) => {
+  const services = fakeServices();
+  const server = await buildServer({
+    logger: false,
+    dataStore: services.dataStore,
+    pool: services.pool,
+    config: { adminToken: "", trustProxy: true },
+  });
+  context.after(() => server.close());
+
+  const response = await server.inject({
+    method: "POST",
+    url: "/api/data/refresh",
+    headers: { "x-forwarded-for": "127.0.0.1" },
+  });
+  const payload = response.json();
+  assert.equal(response.statusCode, 401);
+  assert.equal(payload.error, "Unauthorized");
+  assert.equal(payload.code, "ADMIN_TOKEN_REQUIRED");
 });

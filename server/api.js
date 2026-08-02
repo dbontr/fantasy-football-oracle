@@ -74,18 +74,19 @@ function commonBodySchema(properties = {}, required = []) {
   };
 }
 
+const ADMIN_REQUEST = Symbol("oracleAdminRequest");
+
 function constantTimeEqual(left, right) {
-  const a = Buffer.from(String(left || ""));
-  const b = Buffer.from(String(right || ""));
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
+  const digest = (value) => crypto.createHash("sha256")
+    .update(String(value || ""), "utf8")
+    .digest();
+  return crypto.timingSafeEqual(digest(left), digest(right));
 }
 
-function authorizeRefresh(request, config) {
+function authorizeAdmin(request, config) {
   const authorization = String(request.headers.authorization || "");
-  const supplied = authorization.startsWith("Bearer ")
-    ? authorization.slice(7).trim()
-    : "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  const supplied = match ? match[1].trim() : "";
   if (config.adminToken) {
     if (!constantTimeEqual(supplied, config.adminToken)) {
       const error = new Error("A valid Oracle admin token is required");
@@ -93,14 +94,69 @@ function authorizeRefresh(request, config) {
       error.code = "ADMIN_TOKEN_REQUIRED";
       throw error;
     }
+    request[ADMIN_REQUEST] = true;
     return;
   }
-  const address = String(request.ip || request.socket?.remoteAddress || "");
-  if (["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(address)) return;
-  const error = new Error("Manual source refresh is restricted to the local host");
+  const forwarded = [
+    "forwarded", "x-forwarded-for", "x-forwarded-host",
+    "x-forwarded-proto", "x-real-ip",
+  ].some((name) => request.headers[name] !== undefined);
+  if (forwarded) {
+    const error = new Error("An Oracle admin token is required for proxied administrative requests");
+    error.statusCode = 401;
+    error.code = "ADMIN_TOKEN_REQUIRED";
+    throw error;
+  }
+  const address = String(request.raw?.socket?.remoteAddress || request.socket?.remoteAddress || "");
+  if (["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(address)) {
+    request[ADMIN_REQUEST] = true;
+    return;
+  }
+  const error = new Error("Administrative requests are restricted to the local host");
   error.statusCode = 403;
   error.code = "REFRESH_FORBIDDEN";
   throw error;
+}
+
+const authorizeRefresh = authorizeAdmin;
+
+function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
+  const data = dataStore.getStatus();
+  const compute = pool.stats?.() || {};
+  const native = compute.native && typeof compute.native === "object"
+    ? compute.native
+    : compute;
+  const artifacts = controlPlane.artifacts?.status?.() || {};
+  const eventChain = controlPlane.eventStore?.status?.() || {};
+  const failures = [];
+  const nativeAvailable = native.available ?? null;
+  const readyWorkers = native.readyWorkers ?? native.workers ?? 0;
+  const artifactValid = artifacts.valid ?? null;
+  const eventChainValid = eventChain.valid ?? null;
+
+  if (data.ready !== true) failures.push("player-data-unavailable");
+  if (config.nativeRequired && (nativeAvailable !== true || readyWorkers < 1)) {
+    failures.push("native-compute-unavailable");
+  }
+  if (config.strictArtifactIntegrity && artifactValid !== true) {
+    failures.push("artifact-integrity-invalid");
+  }
+  if (eventChainValid !== true) failures.push("event-chain-invalid");
+
+  return {
+    ready: failures.length === 0,
+    status: failures.length === 0 ? "ready" : "not-ready",
+    dataReady: data.ready === true,
+    players: data.players || 0,
+    dataSource: data.source || null,
+    nativeRequired: Boolean(config.nativeRequired),
+    nativeAvailable,
+    readyWorkers,
+    strictArtifacts: Boolean(config.strictArtifactIntegrity),
+    artifactValid,
+    eventChainValid,
+    failures,
+  };
 }
 
 function computeRouteConfig(max = 30) {
@@ -114,6 +170,11 @@ function computeRouteConfig(max = 30) {
 
 async function registerApiRoutes(fastify, services) {
   const { config, dataStore, pool, controlPlane } = services;
+
+  fastify.addHook("onSend", async (request, reply, payload) => {
+    if (request[ADMIN_REQUEST]) reply.header("cache-control", "no-store");
+    return payload;
+  });
 
   fastify.get("/api/health", async () => ({
     status: "ok",
@@ -134,6 +195,14 @@ async function registerApiRoutes(fastify, services) {
     healthIntelligence: dataStore.getDataset().health || healthSummary(),
     platform: await controlPlane.status(),
   }));
+
+  fastify.get("/api/ready", async (_request, reply) => {
+    const readiness = readinessSnapshot(services);
+    return reply
+      .code(readiness.ready ? 200 : 503)
+      .header("cache-control", "no-store")
+      .send(readiness);
+  });
 
   fastify.get("/api/data/status", async () => dataStore.getStatus());
 
@@ -755,6 +824,9 @@ async function registerApiRoutes(fastify, services) {
 }
 
 module.exports = {
+  authorizeAdmin,
+  constantTimeEqual,
+  readinessSnapshot,
   registerApiRoutes,
   mergeUniverse,
   resolvePlayers,

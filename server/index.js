@@ -17,6 +17,7 @@ const { WorkerPool } = require("./worker-pool.js");
 const { NativeEnginePool } = require("./native-engine-pool.js");
 const { HybridComputePool } = require("./hybrid-compute-pool.js");
 const { PlatformControlPlane } = require("./platform-control-plane.js");
+const { publicErrorPayload, statusForError } = require("./http-errors.js");
 
 const STATIC_FILES = new Set([
   "index.html",
@@ -169,17 +170,13 @@ async function buildServer(options = {}) {
   });
 
   fastify.setErrorHandler((error, request, reply) => {
-    request.log.error({ error }, "Request failed");
-    const statusCode = error.statusCode || (
-      error.code === "QUEUE_FULL" ? 503 :
-        error.code === "NATIVE_REQUIRED" || error.code === "NATIVE_REQUIRED_TASK" ? 503 :
-          error.code === "TASK_TIMEOUT" ? 504 : 500
-    );
-    return reply.code(statusCode).send({
-      error: statusCode >= 500 ? "Server Error" : "Bad Request",
-      code: error.code || "REQUEST_FAILED",
-      message: error.message,
-    });
+    const statusCode = statusForError(error);
+    const log = statusCode >= 500 ? request.log.error : request.log.warn;
+    log.call(request.log, { error, requestId: request.id }, "Request failed");
+    return reply
+      .header("cache-control", "no-store")
+      .code(statusCode)
+      .send(publicErrorPayload(error, statusCode, request.id));
   });
 
   fastify.addHook("onClose", async () => {
