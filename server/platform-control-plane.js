@@ -33,6 +33,27 @@ const DECISION_ROUTES = Object.freeze({
   "/api/season/simulate": "season-simulation",
 });
 
+function normalizeComputeStats(stats = {}) {
+  const native = stats.native && typeof stats.native === "object" ? stats.native : stats;
+  const fallback = stats.fallback && typeof stats.fallback === "object" ? stats.fallback : {};
+  const workers = native.workers ?? stats.workers ?? null;
+  return {
+    mode: stats.mode || null,
+    engine: native.engine ?? stats.engine ?? null,
+    engineVersion: native.engineVersion ?? stats.engineVersion ?? null,
+    nativeAvailable: native.available ?? stats.nativeAvailable ?? null,
+    workers,
+    readyWorkers: native.readyWorkers ?? stats.readyWorkers ?? workers,
+    busy: native.busy ?? stats.busy ?? null,
+    queued: native.queued ?? stats.queued ?? null,
+    completed: native.completed ?? stats.completed ?? null,
+    failed: native.failed ?? stats.failed ?? null,
+    nativeFailures: stats.nativeFailures ?? 0,
+    fallbackRuns: stats.fallbackRuns ?? 0,
+    fallbackWorkers: fallback.workers ?? null,
+  };
+}
+
 class PlatformControlPlane {
   constructor(options = {}) {
     this.config = options.config || {};
@@ -149,7 +170,7 @@ class PlatformControlPlane {
   refreshComponents() {
     if (!this.dataStore || !this.pool) return;
     const data = this.dataStore.getStatus();
-    const compute = this.pool.stats();
+    const compute = normalizeComputeStats(this.pool.stats());
     const generatedAt = data.generatedAt ? Date.parse(data.generatedAt) : null;
     const sourceAge = generatedAt ? Number(this.clock()) - generatedAt : null;
     const stale = sourceAge === null || sourceAge > (this.config.refreshIntervalMs || 6 * 60 * 60 * 1000) * 2;
@@ -563,5 +584,6 @@ class PlatformControlPlane {
 
 module.exports = {
   PLATFORM_VERSION,
+  normalizeComputeStats,
   PlatformControlPlane,
 };

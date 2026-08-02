@@ -351,7 +351,7 @@ Verification currently covers:
 - client/server syntax and dependency audit
 - Linux and Windows CI verification, including native build caching and recovery restore
 
-The current suite contains 101 passing tests, including health and recovery intelligence, coaching intelligence, contextual factor centering, uncertainty decomposition, native expected regret, model-readiness reporting, dataset preload, and crash-reload recovery.
+The current suite contains 103 passing tests, including health and recovery intelligence, coaching intelligence, contextual factor centering, uncertainty decomposition, native expected regret, model-readiness reporting, dataset preload, and crash-reload recovery.
 
 ## Repository layout
 
