@@ -1,0 +1,64 @@
+name: Deploy Azure App Service
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24.x
+  AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install native compiler
+        run: sudo apt-get update && sudo apt-get install -y g++
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify native and Node application
+        run: npm run verify
+
+      - name: Validate deployment configuration
+        shell: bash
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          if [ -z "$AZURE_WEBAPP_NAME" ]; then
+            echo "Set the repository variable AZURE_WEBAPP_NAME."
+            exit 1
+          fi
+          if [ -z "$PUBLISH_PROFILE" ]; then
+            echo "Set the environment secret AZURE_WEBAPP_PUBLISH_PROFILE."
+            exit 1
+          fi
+
+      - name: Prepare native production package
+        shell: bash
+        run: |
+          chmod +x native/bin/oracle-engine
+          rm -rf coverage .playwright-cli data/runtime data/historical/raw data/historical/cache data/health/raw native/src native/third_party
+          rm -f native/CMakeLists.txt native/build.js
+          npm prune --omit=dev
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .
