@@ -1,26 +1,26 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:b7caae9c-a987-4c7f-8c05-d6dc8cb42e58",
+  "serialNumber": "urn:uuid:bb2937f8-4fb2-4d4d-8c05-d6dc8cb42e58",
   "version": 1,
   "metadata": {
     "tools": [
       {
         "vendor": "Bontr",
         "name": "Fantasy Football Oracle SBOM Generator",
-        "version": "5.0.0"
+        "version": "5.1.0"
       }
     ],
     "component": {
       "type": "application",
-      "bom-ref": "pkg:npm/fantasy-football-oracle@5.0.0",
+      "bom-ref": "pkg:npm/fantasy-football-oracle@5.1.0",
       "name": "fantasy-football-oracle",
-      "version": "5.0.0",
-      "purl": "pkg:npm/fantasy-football-oracle@5.0.0",
+      "version": "5.1.0",
+      "purl": "pkg:npm/fantasy-football-oracle@5.1.0",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "c7fefb4ddcba9f29cf5db8e16c290de1ad2a993f365afe905181d30aed85e3ab"
+          "content": "d4dda0684991a6dd4b4485005747f69196bc04cc826fe62c989f27ec4c123e33"
         }
       ]
     },
@@ -3184,7 +3184,7 @@
   ],
   "dependencies": [
     {
-      "ref": "pkg:npm/fantasy-football-oracle@5.0.0",
+      "ref": "pkg:npm/fantasy-football-oracle@5.1.0",
       "dependsOn": [
         "pkg:npm/%40fastify/accept-negotiator@2.0.1",
         "pkg:npm/%40fastify/ajv-compiler@4.0.5",

@@ -1,11 +1,21 @@
 {
-  "version": "oracle-artifacts-2026.1",
-  "commit": "e39f7fd6f3f317fc4f17485d646f2be529a3d8c9",
+  "version": "oracle-artifacts-2026.2-v5.1",
+  "commit": "a4edbee5663fce2a587eee83f25758a169c30e1a",
   "files": [
     {
       "path": "artifacts/sbom.cdx.json",
       "bytes": 81036,
-      "sha256": "1c5625f5fae1f90683409a7ae304e94cfc03a209ecc4adf882acda1ea06ce353"
+      "sha256": "a5c2850c340f6d42007807f6f557cbf64229271946cda6f67c657bef1ab305c8"
+    },
+    {
+      "path": "data/calibration/free-probabilistic-summary.json",
+      "bytes": 4868,
+      "sha256": "6f39d69a123c191ecfbb14781a2124b2e621baeb668c96c36e437376f8c4fef5"
+    },
+    {
+      "path": "data/calibration/free-probabilistic.json",
+      "bytes": 15335,
+      "sha256": "8eb8be04001135a89bcd332a37dcd6266cf5823397e6edaf6b03e28f20ea5621"
     },
     {
       "path": "data/calibration/historical-backtest-summary.json",
@@ -45,14 +55,14 @@
     {
       "path": "package-lock.json",
       "bytes": 40726,
-      "sha256": "c7fefb4ddcba9f29cf5db8e16c290de1ad2a993f365afe905181d30aed85e3ab"
+      "sha256": "d4dda0684991a6dd4b4485005747f69196bc04cc826fe62c989f27ec4c123e33"
     },
     {
       "path": "package.json",
-      "bytes": 6507,
-      "sha256": "58d3aae02ecdaf44a21ba1a9d598baf96a4614523713f1a9df9496688ed1a7c9"
+      "bytes": 7613,
+      "sha256": "2e950a3e5ce2856ad6917618aaa423e8fbd25fa711c9c228f2bfe5ea8666c965"
     }
   ],
   "generatedAt": null,
-  "semanticDigest": "665f92c1a2b7235fdf38a5080293ac1ad9c7253188cb4407dc78d4c9f376e9c7"
+  "semanticDigest": "92e8e545311159659f88a1030e57e3aef1398e31f80f9cd80f02d85fee606d29"
 }
