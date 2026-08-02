@@ -95,6 +95,12 @@ jobs:
           & $compiler --version
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
+      - name: Validate Windows service manager
+        shell: pwsh
+        run: |
+          [scriptblock]::Create(
+            (Get-Content scripts/windows/oracle-service.ps1 -Raw)
+          ) | Out-Null
       - name: Verify Windows source, native engine, tests, and artifacts
         run: npm run verify:offline
       - name: Audit production dependencies
