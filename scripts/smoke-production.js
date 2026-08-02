@@ -22,6 +22,7 @@ function validateReadiness(payload = {}) {
   assertCondition(payload.eventChainValid === true, "Event chain is not valid");
   if (payload.nativeRequired) {
     assertCondition(payload.nativeAvailable === true, "Required native engine is unavailable");
+    assertCondition(Number(payload.liveWorkers || 0) > 0, "Required native workers are not live");
   }
   if (payload.strictArtifacts) {
     assertCondition(payload.artifactValid === true, "Strict artifact integrity is invalid");
@@ -32,7 +33,7 @@ function validateHealth(payload = {}, options = {}) {
   assertCondition(payload.status === "ok", `Unexpected health status: ${payload.status || "missing"}`);
   const native = payload.compute?.native || payload.compute || {};
   assertCondition(native.available === true, "Native engine is unavailable");
-  const workerCount = Number(native.workers ?? native.readyWorkers ?? 0);
+  const workerCount = Number(native.liveWorkers ?? native.workers ?? native.readyWorkers ?? 0);
   assertCondition(workerCount > 0, "Native worker pool is unavailable");
   const artifacts = payload.platform?.artifacts || {};
   assertCondition(artifacts.valid === true, "Artifact integrity is invalid");
@@ -69,6 +70,7 @@ async function main() {
     ok: true,
     baseUrl: result.baseUrl,
     rootStatus: result.rootStatus,
+    liveWorkers: result.readiness.liveWorkers,
     readyWorkers: result.readiness.readyWorkers,
     nativeAvailable: result.readiness.nativeAvailable,
     artifactValid: result.readiness.artifactValid,

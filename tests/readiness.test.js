@@ -19,7 +19,7 @@ function services(overrides = {}) {
     pool: {
       stats: () => ({
         mode: "native-cpp-primary",
-        native: { available: true, workers: 4, readyWorkers: 4 },
+        native: { available: true, workers: 4, liveWorkers: 4, readyWorkers: 4 },
       }),
       ...overrides.pool,
     },
@@ -40,6 +40,7 @@ test("readiness is healthy when required dependencies are healthy", () => {
     dataSource: "test",
     nativeRequired: true,
     nativeAvailable: true,
+    liveWorkers: 4,
     readyWorkers: 4,
     strictArtifacts: true,
     artifactValid: true,
@@ -52,7 +53,7 @@ test("readiness remains healthy while every native worker is busy", () => {
   const result = readinessSnapshot(services({
     pool: { stats: () => ({
       mode: "native-cpp-primary",
-      native: { available: true, workers: 4, readyWorkers: 0, busy: 4 },
+      native: { available: true, workers: 4, liveWorkers: 4, readyWorkers: 0, busy: 4 },
     }) },
   }));
   assert.equal(result.ready, true);
@@ -62,12 +63,23 @@ test("readiness remains healthy while every native worker is busy", () => {
 
 test("readiness fails when native compute is required but unavailable", () => {
   const result = readinessSnapshot(services({
-    pool: { stats: () => ({ mode: "javascript-fallback", native: { available: false, workers: 0, readyWorkers: 0 } }) },
+    pool: { stats: () => ({ mode: "javascript-fallback", native: { available: false, workers: 0, liveWorkers: 0, readyWorkers: 0 } }) },
   }));
   assert.equal(result.ready, false);
   assert.ok(result.failures.includes("native-compute-unavailable"));
 });
 
+
+test("readiness fails when configured native workers are not live", () => {
+  const result = readinessSnapshot(services({
+    pool: { stats: () => ({
+      mode: "native-cpp-primary",
+      native: { available: true, workers: 4, liveWorkers: 0, readyWorkers: 0 },
+    }) },
+  }));
+  assert.equal(result.ready, false);
+  assert.ok(result.failures.includes("native-compute-unavailable"));
+});
 test("readiness fails when strict artifact integrity is invalid", () => {
   const result = readinessSnapshot(services({
     controlPlane: { artifacts: { status: () => ({ valid: false }) }, eventStore: { status: () => ({ valid: true }) } },
@@ -88,7 +100,7 @@ test("readiness fails for invalid event chain or unavailable data", () => {
 test("fallback compute is ready when native is not required", () => {
   const result = readinessSnapshot(services({
     config: { nativeRequired: false },
-    pool: { stats: () => ({ mode: "javascript-fallback", native: { available: false, workers: 0, readyWorkers: 0 } }) },
+    pool: { stats: () => ({ mode: "javascript-fallback", native: { available: false, workers: 0, liveWorkers: 0, readyWorkers: 0 } }) },
   }));
   assert.equal(result.ready, true);
   assert.equal(result.nativeAvailable, false);

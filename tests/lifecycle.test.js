@@ -6,6 +6,7 @@ const test = require("node:test");
 
 const {
   createShutdownController,
+  installShutdownFileWatcher,
   installSignalHandlers,
 } = require("../server/lifecycle.js");
 
@@ -63,4 +64,46 @@ test("signal handlers delegate once and can be removed", async () => {
   processRef.emit("SIGTERM");
   await new Promise((resolve) => setImmediate(resolve));
   assert.deepEqual(signals, ["SIGINT"]);
+});
+test("shutdown close failures force process termination", async () => {
+  const forced = [];
+  const processRef = { exitCode: null };
+  const failure = Object.assign(new Error("close failed"), { code: "CLOSE_FAILED" });
+  const server = {
+    log: { info() {}, error() {} },
+    async close() { throw failure; },
+  };
+  const shutdown = createShutdownController({
+    server,
+    processRef,
+    forceExit: (code) => forced.push(code),
+  });
+  await assert.rejects(shutdown("SIGTERM"), { code: "CLOSE_FAILED" });
+  assert.equal(processRef.exitCode, 1);
+  assert.deepEqual(forced, [1]);
+});
+
+test("shutdown request files trigger one graceful shutdown", async () => {
+  let timerCallback = null;
+  const removed = [];
+  const signals = [];
+  const stop = installShutdownFileWatcher({
+    filePath: "C:\\oracle\\shutdown.request",
+    shutdown: async (signal) => signals.push(signal),
+    fsRef: {
+      async stat() { return { size: 1 }; },
+      async rm(filePath) { removed.push(filePath); },
+    },
+    setIntervalRef(callback) {
+      timerCallback = callback;
+      return { unref() {} };
+    },
+    clearIntervalRef() { timerCallback = null; },
+  });
+  timerCallback();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(removed, ["C:\\oracle\\shutdown.request"]);
+  assert.deepEqual(signals, ["shutdown-request"]);
+  stop();
+  assert.equal(timerCallback, null);
 });

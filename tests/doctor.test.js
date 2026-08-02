@@ -6,6 +6,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
+const { REQUIRED_NATIVE_TASKS } = require("../native/capabilities.js");
 const {
   parseArguments,
   probeNativeBinary,
@@ -62,12 +63,22 @@ test("production policy rejects unsafe proxy and relaxed integrity", () => {
 test("native capability probe validates engine identity", () => {
   const spawnSync = () => ({
     status: 0,
-    stdout: JSON.stringify({ engine: "oracle-native", version: "1.1.0" }),
+    stdout: JSON.stringify({
+      engine: "oracle-native",
+      protocol: 1,
+      tasks: REQUIRED_NATIVE_TASKS,
+      version: "1.1.0",
+    }),
     stderr: "",
   });
   assert.deepEqual(probeNativeBinary("oracle-engine", { spawnSync }), {
     ok: true,
-    capabilities: { engine: "oracle-native", version: "1.1.0" },
+    capabilities: {
+      engine: "oracle-native",
+      protocol: 1,
+      tasks: REQUIRED_NATIVE_TASKS,
+      version: "1.1.0",
+    },
   });
   const wrong = probeNativeBinary("oracle-engine", {
     spawnSync: () => ({ status: 0, stdout: '{"engine":"other"}', stderr: "" }),

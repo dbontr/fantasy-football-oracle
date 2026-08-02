@@ -1,9 +1,14 @@
 "use strict";
+
 const { createHash } = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+
+const { parseNativeCapabilities } = require("./capabilities.js");
+const { fileSha256 } = require("./integrity.js");
+
 const root = __dirname;
 const isWindows = process.platform === "win32";
 const binaryName = isWindows ? "oracle-engine.exe" : "oracle-engine";
@@ -22,13 +27,64 @@ const flags = [
   "-Wpedantic",
   ...(isWindows ? ["-static", "-static-libgcc", "-static-libstdc++"] : []),
 ];
+const BUILD_INPUT_EXTENSIONS = new Set([
+  ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".inc",
+]);
+
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
-function compilerCandidates() {
+
+function walkFiles(directory) {
+  if (!fs.existsSync(directory)) return [];
+  const files = [];
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const absolute = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...walkFiles(absolute));
+    else if (entry.isFile()) files.push(absolute);
+  }
+  return files;
+}
+
+function collectBuildInputs(rootDir = root) {
+  const fixed = [
+    path.join(rootDir, "build.js"),
+    path.join(rootDir, "capabilities.js"),
+    path.join(rootDir, "integrity.js"),
+  ];
+  const compiled = [
+    ...walkFiles(path.join(rootDir, "src")),
+    ...walkFiles(path.join(rootDir, "third_party")),
+  ].filter((file) => BUILD_INPUT_EXTENSIONS.has(path.extname(file).toLowerCase()));
+  return unique([...fixed, ...compiled])
+    .filter((file) => fs.existsSync(file))
+    .sort((left, right) => (
+      path.relative(rootDir, left).localeCompare(path.relative(rootDir, right))
+    ));
+}
+
+function versionedW64DevkitCandidates(homeDir = os.homedir()) {
+  const toolsDir = path.join(homeDir, "Tools");
+  try {
+    return fs.readdirSync(toolsDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && /^w64devkit/i.test(entry.name))
+      .flatMap((entry) => {
+        const base = path.join(toolsDir, entry.name);
+        return [
+          path.join(base, "bin", "g++.exe"),
+          path.join(base, "w64devkit", "bin", "g++.exe"),
+        ];
+      });
+  } catch {
+    return [];
+  }
+}
+
+function compilerCandidates(homeDir = os.homedir()) {
   return unique([
     process.env.CXX,
-    isWindows ? path.join(os.homedir(), "Tools", "w64devkit", "bin", "g++.exe") : null,
+    isWindows ? path.join(homeDir, "Tools", "w64devkit", "bin", "g++.exe") : null,
+    ...(isWindows ? versionedW64DevkitCandidates(homeDir) : []),
     isWindows ? "C:\\msys64\\ucrt64\\bin\\g++.exe" : null,
     isWindows ? "C:\\msys64\\mingw64\\bin\\g++.exe" : null,
     isWindows ? "C:\\ProgramData\\chocolatey\\bin\\g++.exe" : null,
@@ -36,6 +92,7 @@ function compilerCandidates() {
     "clang++",
   ]);
 }
+
 function compilerEnvironment(command) {
   const compilerDir = path.dirname(command);
   if (compilerDir === ".") return process.env;
@@ -44,35 +101,42 @@ function compilerEnvironment(command) {
     PATH: `${compilerDir}${path.delimiter}${process.env.PATH || ""}`,
   };
 }
-function compilerVersion(command) {
-  const result = spawnSync(command, ["--version"], {
+
+function compilerVersion(command, options = {}) {
+  const result = (options.spawnSync || spawnSync)(command, ["--version"], {
     encoding: "utf8",
     env: compilerEnvironment(command),
     windowsHide: true,
+    timeout: 15_000,
   });
   if (result.status !== 0) return null;
   return `${result.stdout || ""}${result.stderr || ""}`.trim();
 }
-function inputDigest(version) {
+
+function inputDigest(version, options = {}) {
+  const rootDir = options.rootDir || root;
+  const selectedFlags = options.flags || flags;
+  const inputs = options.inputs || collectBuildInputs(rootDir);
   const hash = createHash("sha256");
-  hash.update("oracle-native-build-v3\0");
-  hash.update(version);
-  hash.update("\0builder\0");
-  hash.update(fs.readFileSync(__filename));
-  for (const flag of flags) hash.update(`\0flag:${flag}`);
-  for (const source of sources) {
-    hash.update(`\0source:${path.relative(root, source).replaceAll("\\", "/")}\0`);
-    hash.update(fs.readFileSync(source));
+  hash.update("oracle-native-build-v4\0");
+  hash.update(String(version || ""));
+  for (const flag of selectedFlags) hash.update(`\0flag:${flag}`);
+  for (const file of inputs) {
+    const relative = path.relative(rootDir, file).replaceAll("\\", "/");
+    hash.update(`\0input:${relative}\0`);
+    hash.update(fs.readFileSync(file));
   }
   return hash.digest("hex");
 }
-function readMetadata() {
+
+function readMetadata(filePath = metadataPath) {
   try {
-    return JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
   } catch {
     return null;
   }
 }
+
 function cleanupBackups() {
   const directory = path.dirname(output);
   const prefix = `${binaryName}.`;
@@ -85,31 +149,50 @@ function cleanupBackups() {
     }
   }
 }
-function probe(binary) {
+
+function probe(binary, options = {}) {
   if (!fs.existsSync(binary)) return null;
-  const result = spawnSync(binary, ["--capabilities"], {
+  const result = (options.spawnSync || spawnSync)(binary, ["--capabilities"], {
     encoding: "utf8",
     windowsHide: true,
     timeout: 10_000,
   });
   if (result.status !== 0) return null;
   try {
-    const capabilities = JSON.parse(result.stdout.trim());
-    return capabilities.engine === "oracle-native" ? capabilities : null;
+    return parseNativeCapabilities(result.stdout);
   } catch {
     return null;
   }
 }
-function writeMetadata(metadata) {
-  const temporary = `${metadataPath}.${process.pid}.tmp`;
+
+function cachedBinaryCapabilities(options = {}) {
+  const {
+    metadata,
+    digest,
+    binary = output,
+    probeFn = probe,
+  } = options;
+  if (
+    metadata?.schemaVersion !== 2
+    || metadata.inputDigest !== digest
+    || !/^[a-f0-9]{64}$/i.test(metadata.binaryDigest || "")
+    || !fs.existsSync(binary)
+  ) return null;
+  if (fileSha256(binary) !== metadata.binaryDigest) return null;
+  return probeFn(binary);
+}
+
+function writeMetadata(metadata, filePath = metadataPath) {
+  const temporary = `${filePath}.${process.pid}.tmp`;
   fs.writeFileSync(temporary, `${JSON.stringify(metadata, null, 2)}\n`, "utf8");
   try {
-    fs.renameSync(temporary, metadataPath);
+    fs.renameSync(temporary, filePath);
   } catch {
-    fs.rmSync(metadataPath, { force: true });
-    fs.renameSync(temporary, metadataPath);
+    fs.rmSync(filePath, { force: true });
+    fs.renameSync(temporary, filePath);
   }
 }
+
 function replaceBinary(temporary) {
   if (!isWindows) {
     fs.renameSync(temporary, output);
@@ -148,11 +231,13 @@ function replaceBinary(temporary) {
     throw error;
   }
 }
+
 function fail(message, error = null) {
   console.error(message);
   if (error) console.error(error.stack || error.message || String(error));
   process.exitCode = 1;
 }
+
 function main() {
   fs.mkdirSync(path.dirname(output), { recursive: true });
   cleanupBackups();
@@ -169,12 +254,13 @@ function main() {
     fail("No C++20 compiler found. Set CXX or install GCC/Clang.");
     return;
   }
-  const digest = inputDigest(version);
+  const inputs = collectBuildInputs();
+  const digest = inputDigest(version, { inputs });
   const metadata = readMetadata();
   const force = ["1", "true", "yes"].includes(
     String(process.env.ORACLE_FORCE_NATIVE_REBUILD || "").toLowerCase(),
   );
-  const capabilities = !force && metadata?.inputDigest === digest ? probe(output) : null;
+  const capabilities = force ? null : cachedBinaryCapabilities({ metadata, digest });
   if (capabilities) {
     console.log(`Native engine is up to date: ${output}`);
     console.log(JSON.stringify(capabilities));
@@ -202,9 +288,12 @@ function main() {
       return;
     }
     replaceBinary(temporary);
+    const binaryDigest = fileSha256(output);
     writeMetadata({
-      schemaVersion: 1,
+      schemaVersion: 2,
       inputDigest: digest,
+      binaryDigest,
+      inputs: inputs.map((file) => path.relative(root, file).replaceAll("\\", "/")),
       compiler: path.basename(compiler),
       compilerVersion: version.split(/\r?\n/, 1)[0],
       flags,
@@ -218,4 +307,18 @@ function main() {
     fs.rmSync(temporary, { force: true });
   }
 }
-main();
+
+module.exports = {
+  BUILD_INPUT_EXTENSIONS,
+  cachedBinaryCapabilities,
+  collectBuildInputs,
+  compilerCandidates,
+  compilerEnvironment,
+  compilerVersion,
+  inputDigest,
+  main,
+  probe,
+  versionedW64DevkitCandidates,
+};
+
+if (require.main === module) main();

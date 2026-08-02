@@ -8,6 +8,8 @@ const {
   loadArtifactManifest,
   validateArtifactManifest,
 } = require("../server/artifact-registry.js");
+const { parseNativeCapabilities } = require("../native/capabilities.js");
+const { verifyNativeBinaryIntegrity } = require("../native/integrity.js");
 
 function result(id, status, message, details = null) {
   return { id, status, message, ...(details ? { details } : {}) };
@@ -80,11 +82,7 @@ function probeNativeBinary(binary, options = {}) {
     return { ok: false, error: execution.stderr || execution.error || "probe failed" };
   }
   try {
-    const capabilities = JSON.parse(execution.stdout);
-    if (capabilities.engine !== "oracle-native") {
-      return { ok: false, error: "unexpected native engine identity" };
-    }
-    return { ok: true, capabilities };
+    return { ok: true, capabilities: parseNativeCapabilities(execution.stdout) };
   } catch (error) {
     return { ok: false, error: `invalid capability response: ${error.message}` };
   }
@@ -182,6 +180,20 @@ async function collectDoctorReport(options = {}) {
       ? `${native.capabilities.engine} ${native.capabilities.version || "unknown"}`
       : `Native engine unavailable: ${native.error}`,
     native.ok ? native.capabilities : null,
+  ));
+  const nativeMetadataPath = config.nativeBuildMetadataPath
+    || path.join(path.dirname(config.nativeBinary), "build-metadata.json");
+  const nativeIntegrity = verifyNativeBinaryIntegrity(config.nativeBinary, nativeMetadataPath);
+  checks.push(result(
+    "native.integrity",
+    nativeIntegrity.valid ? "pass" : (config.nativeRequired || strict ? "fail" : "warn"),
+    nativeIntegrity.valid
+      ? `Native binary verified: ${nativeIntegrity.binaryDigest.slice(0, 12)}`
+      : `Native binary integrity failed: ${nativeIntegrity.reason}`,
+    nativeIntegrity.valid ? {
+      binaryDigest: nativeIntegrity.binaryDigest,
+      inputDigest: nativeIntegrity.metadata.inputDigest || null,
+    } : null,
   ));
 
   for (const [id, directory] of [

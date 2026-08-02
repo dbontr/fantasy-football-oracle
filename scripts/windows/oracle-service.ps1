@@ -6,7 +6,8 @@ param(
   [string]$TaskName = 'Fantasy Football Oracle',
   [string]$RuntimeDir = '',
   [int]$Port = 8787,
-  [int]$WaitSeconds = 90
+  [int]$WaitSeconds = 90,
+  [int]$StopWaitSeconds = 25
 )
 
 Set-StrictMode -Version Latest
@@ -23,6 +24,7 @@ $StdoutPath = Join-Path $ServiceDir 'oracle.out.log'
 $StderrPath = Join-Path $ServiceDir 'oracle.err.log'
 $EnvPath = Join-Path $RepoRoot '.env.local'
 $ScriptPath = $MyInvocation.MyCommand.Path
+$ShutdownRequestPath = Join-Path $ServiceDir 'shutdown.request'
 
 function Import-OracleEnvironment {
   if (Test-Path -LiteralPath $EnvPath) {
@@ -54,6 +56,11 @@ function Set-OracleDefaults {
   }
   if (-not $env:ORACLE_PLATFORM_RUNTIME_DIR) {
     $env:ORACLE_PLATFORM_RUNTIME_DIR = Join-Path $env:ORACLE_RUNTIME_DIR 'platform'
+  }
+  if (-not $env:ORACLE_SHUTDOWN_REQUEST_PATH) {
+    $env:ORACLE_SHUTDOWN_REQUEST_PATH = $ShutdownRequestPath
+  } else {
+    $script:ShutdownRequestPath = [IO.Path]::GetFullPath($env:ORACLE_SHUTDOWN_REQUEST_PATH)
   }
 }
 
@@ -104,6 +111,7 @@ function Invoke-Run {
   New-Item -ItemType Directory -Path $ServiceDir -Force | Out-Null
   Import-OracleEnvironment
   Set-OracleDefaults
+  Remove-Item -LiteralPath $ShutdownRequestPath -Force -ErrorAction SilentlyContinue
   Set-Location $RepoRoot
   Invoke-OracleDoctor
   $node = (Get-Command node.exe -ErrorAction Stop).Source
@@ -133,21 +141,51 @@ function Invoke-Start {
 }
 
 function Invoke-Stop {
+  Import-OracleEnvironment
+  Set-OracleDefaults
   $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-  if ($task -and $task.State -eq 'Running') {
-    Stop-ScheduledTask -TaskName $TaskName
-    Start-Sleep -Seconds 2
+  $process = Get-OracleProcess
+  $graceful = $false
+  if ($process) {
+    New-Item -ItemType Directory -Path $ServiceDir -Force | Out-Null
+    Set-Content -LiteralPath $ShutdownRequestPath `
+      -Value ((Get-Date).ToUniversalTime().ToString('O')) -NoNewline
+    $deadline = (Get-Date).AddSeconds($StopWaitSeconds)
+    while ((Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+      Start-Sleep -Milliseconds 250
+    }
+    $graceful = -not [bool](Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue)
   }
+
   $process = Get-OracleProcess
   if ($process) {
-    Stop-Process -Id $process.ProcessId -Force
+    if ($task -and $task.State -eq 'Running') {
+      Stop-ScheduledTask -TaskName $TaskName
+      Start-Sleep -Seconds 1
+    }
+    Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
     $deadline = (Get-Date).AddSeconds(15)
     while ((Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
       Start-Sleep -Milliseconds 250
     }
+    if (Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue) {
+      throw "Oracle process $($process.ProcessId) did not stop"
+    }
+  } elseif ($task -and $task.State -eq 'Running') {
+    $deadline = (Get-Date).AddSeconds(5)
+    do {
+      Start-Sleep -Milliseconds 250
+      $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+    } while ($task -and $task.State -eq 'Running' -and (Get-Date) -lt $deadline)
+    if ($task -and $task.State -eq 'Running') {
+      Stop-ScheduledTask -TaskName $TaskName
+    }
   }
+
+  Remove-Item -LiteralPath $ShutdownRequestPath -Force -ErrorAction SilentlyContinue
   Remove-Item -LiteralPath $PidPath -Force -ErrorAction SilentlyContinue
-  Write-Output 'Oracle is stopped'
+  if ($graceful) { Write-Output 'Oracle stopped gracefully' }
+  else { Write-Output 'Oracle is stopped' }
 }
 
 function Invoke-Status {
@@ -164,6 +202,7 @@ function Invoke-Status {
     repoRoot = $RepoRoot
     stdoutLog = $StdoutPath
     stderrLog = $StderrPath
+    shutdownRequest = $ShutdownRequestPath
   } | ConvertTo-Json
 }
 

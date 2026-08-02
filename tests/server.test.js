@@ -1,8 +1,9 @@
 const assert = require("node:assert/strict");
+const { EventEmitter } = require("node:events");
 const test = require("node:test");
 
 const bundled = require("../data/players-2026.json");
-const { buildServer } = require("../server/index.js");
+const { buildServer, start } = require("../server/index.js");
 
 function fakeServices() {
   const players = bundled.players.slice(0, 160).map((player, index) => index === 0 ? {
@@ -546,6 +547,7 @@ test("readiness route exposes a minimal no-store production probe", async (conte
   assert.equal(payload.dataSource, "test");
   assert.equal(payload.nativeRequired, false);
   assert.equal(payload.nativeAvailable, null);
+  assert.equal(payload.liveWorkers, 2);
   assert.equal(payload.readyWorkers, 2);
   assert.equal(payload.strictArtifacts, false);
   assert.equal(typeof payload.artifactValid, "boolean");
@@ -597,4 +599,29 @@ test("trusted proxy headers cannot spoof loopback admin access", async (context)
   assert.equal(response.statusCode, 401);
   assert.equal(payload.error, "Unauthorized");
   assert.equal(payload.code, "ADMIN_TOKEN_REQUIRED");
+});
+test("listen failures close initialized server resources", async () => {
+  const processRef = new EventEmitter();
+  const closeHooks = [];
+  let closes = 0;
+  const listenFailure = Object.assign(new Error("address unavailable"), { code: "EADDRINUSE" });
+  const server = {
+    log: { info() {}, warn() {}, error() {} },
+    addHook(name, hook) {
+      if (name === "onClose") closeHooks.push(hook);
+    },
+    async listen() { throw listenFailure; },
+    async close() {
+      closes += 1;
+      for (const hook of closeHooks) await hook();
+    },
+  };
+  await assert.rejects(() => start({
+    builder: async () => server,
+    config: { host: "127.0.0.1", port: 8787, shutdownRequestPath: "" },
+    processRef,
+  }), { code: "EADDRINUSE" });
+  assert.equal(closes, 1);
+  assert.equal(processRef.listenerCount("SIGINT"), 0);
+  assert.equal(processRef.listenerCount("SIGTERM"), 0);
 });

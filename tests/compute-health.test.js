@@ -15,11 +15,15 @@ test("normalizes hybrid native compute stats", () => {
       engine: "oracle-native",
       engineVersion: "1.1.0",
       workers: 4,
+      configuredWorkers: 4,
+      liveWorkers: 4,
+      restartingWorkers: 0,
       readyWorkers: 4,
       busy: 1,
       queued: 2,
       completed: 8,
       failed: 0,
+      integrity: { required: true, valid: true },
     },
     fallback: { workers: 4 },
     nativeFailures: 1,
@@ -30,6 +34,9 @@ test("normalizes hybrid native compute stats", () => {
   assert.equal(result.engine, "oracle-native");
   assert.equal(result.engineVersion, "1.1.0");
   assert.equal(result.workers, 4);
+  assert.equal(result.configuredWorkers, 4);
+  assert.equal(result.liveWorkers, 4);
+  assert.equal(result.restartingWorkers, 0);
   assert.equal(result.readyWorkers, 4);
   assert.equal(result.busy, 1);
   assert.equal(result.queued, 2);
@@ -38,6 +45,7 @@ test("normalizes hybrid native compute stats", () => {
   assert.equal(result.nativeFailures, 1);
   assert.equal(result.fallbackRuns, 2);
   assert.equal(result.fallbackWorkers, 4);
+  assert.deepEqual(result.integrity, { required: true, valid: true });
 });
 
 test("preserves legacy flat compute stats", () => {
@@ -51,6 +59,9 @@ test("preserves legacy flat compute stats", () => {
 
   assert.equal(result.nativeAvailable, null);
   assert.equal(result.workers, 2);
+  assert.equal(result.configuredWorkers, 2);
+  assert.equal(result.liveWorkers, 2);
+  assert.equal(result.restartingWorkers, 0);
   assert.equal(result.readyWorkers, 2);
   assert.equal(result.completed, 3);
 });

@@ -148,7 +148,7 @@ Persistent C++20 worker pool
   `-- season and league simulations
 ```
 
-The native executable uses newline-delimited JSON over stdin/stdout. Each process stays alive, so startup and model-loading costs are not paid for every request. A crashed worker is isolated, rejected, replaced, and removed from service without terminating the API.
+The native executable uses newline-delimited JSON over stdin/stdout. Each process stays alive, so startup and model-loading costs are not paid for every request. A crashed worker is isolated and its active task is rejected without terminating the API. Replacements use bounded exponential backoff, queued tasks retain an end-to-end deadline, and health reports configured, live, restarting, idle, and busy workers separately.
 
 Legacy calculations can fall back to the JavaScript worker pool when the native executable is unavailable. Native-only season, start/sit, and league simulations fail explicitly rather than silently substituting a weaker model.
 
@@ -197,7 +197,7 @@ Requirements:
 - Node.js 20 or newer
 - A C++20 GCC or Clang compiler for `npm run build:native`; the included CMake project also supports MSVC.
 
-On Windows, the build script searches `CXX`, common MSYS2/Chocolatey locations, and `~/Tools/w64devkit`. On Linux, set `CXX=g++` or install the distribution compiler.
+On Windows, the build script searches `CXX`, common MSYS2/Chocolatey locations, `~/Tools/w64devkit`, and versioned nested w64devkit directories. On Linux, set `CXX=g++` or install the distribution compiler.
 
 ```bash
 npm ci --ignore-scripts
@@ -205,7 +205,7 @@ npm run verify
 npm start
 ```
 
-`npm run verify` builds the native executable before testing. Verified builds are cached by source, flags, and compiler version, so repeated checks do not replace a native binary that a running server is using. Set `ORACLE_FORCE_NATIVE_REBUILD=true` to force a rebuild. On Windows, a forced build stages the replacement safely while active workers finish on the renamed previous executable; restart the server to move every worker to the new build. Open `http://localhost:8787` after the server starts.
+`npm run verify` builds the native executable before testing. Verified builds are cached by every source, header, include fragment, vendored header, build helper, compiler flag, and compiler version. Cache reuse also requires the executable SHA-256 recorded in `native/bin/build-metadata.json`, so a changed or partially replaced binary is rebuilt instead of trusted. Set `ORACLE_FORCE_NATIVE_REBUILD=true` to force a rebuild. On Windows, a forced build stages the replacement safely while active workers finish on the renamed previous executable; restart the server to move every worker to the new build. Open `http://localhost:8787` after the server starts.
 
 Useful commands:
 
@@ -234,6 +234,7 @@ npm run smoke:production -- --base http://127.0.0.1:8787 --strict
 npm run service:windows:install
 npm run service:windows:status
 npm run service:windows:smoke
+npm run service:windows:test
 npm run dev
 ```
 
@@ -294,6 +295,7 @@ Important environment variables:
 
 ```text
 ORACLE_NATIVE_BINARY=
+ORACLE_NATIVE_BUILD_METADATA=
 ORACLE_NATIVE_WORKERS=4
 ORACLE_NATIVE_DISABLED=false
 ORACLE_NATIVE_REQUIRED=false
@@ -314,7 +316,7 @@ Administrative requests are accepted without `ORACLE_ADMIN_TOKEN` only from a di
 - Compute requests contain only the state required for the calculation.
 - API bodies, queues, simulation budgets, and task runtimes are bounded.
 - Expensive routes are rate limited.
-- Native worker crashes are isolated and workers are restarted.
+- Native and JavaScript worker crashes are isolated; replacements use bounded exponential backoff and queue-inclusive task deadlines.
 - Static serving uses an allowlist and does not expose server source or environment files.
 - Security headers, same-origin APIs, compression, ETags, and atomic cache replacement are enabled.
 - Administrative responses are marked `no-store`; internal 5xx details remain in logs while clients receive a request ID and a generic message.
@@ -328,8 +330,8 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for Docker, Azure App Service, pe
 
 CI builds and starts the production container, runs it with a read-only root filesystem, dropped Linux capabilities, and `no-new-privileges`, then executes the strict readiness and browser-shell smoke test.
 
-On Windows, `scripts/windows/oracle-service.ps1` installs an at-logon scheduled task that runs the strict deployment doctor before starting Oracle, validates readiness before reporting success, tracks the child PID, writes service logs under `data/runtime/service`, and supports start, stop, restart, status, smoke, and uninstall actions. Optional local settings belong in ignored `.env.local`; the parser accepts only literal `NAME=value` entries and never executes the file.
-Pass `-RuntimeDir <path>` after `--` on any `service:windows:*` npm command to isolate state, PID tracking, and logs from the default `data/runtime` directory.
+On Windows, `scripts/windows/oracle-service.ps1` installs an at-logon scheduled task that runs the strict deployment doctor before starting Oracle, validates readiness before reporting success, tracks the child PID, writes service logs under `data/runtime/service`, and supports start, stop, restart, status, smoke, and uninstall actions. Stop requests first enter the Node shutdown controller so ledgers, snapshots, workers, and PID files can close cleanly; forced termination is only the fallback. Optional local settings belong in ignored `.env.local`; the parser accepts only literal `NAME=value` entries and never executes the file.
+Pass `-RuntimeDir <path>` after `--` on any `service:windows:*` npm command to isolate state, PID tracking, and logs from the default `data/runtime` directory. `npm run service:windows:test` performs an isolated end-to-end strict launch, readiness check, browser smoke, graceful stop, and cleanup check without installing a scheduled task.
 
 ## Verification
 
