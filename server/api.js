@@ -130,12 +130,13 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
   const eventChain = controlPlane.eventStore?.status?.() || {};
   const failures = [];
   const nativeAvailable = native.available ?? null;
-  const readyWorkers = native.readyWorkers ?? native.workers ?? 0;
+  const nativeWorkers = native.workers ?? native.readyWorkers ?? 0;
+  const readyWorkers = native.readyWorkers ?? nativeWorkers;
   const artifactValid = artifacts.valid ?? null;
   const eventChainValid = eventChain.valid ?? null;
 
   if (data.ready !== true) failures.push("player-data-unavailable");
-  if (config.nativeRequired && (nativeAvailable !== true || readyWorkers < 1)) {
+  if (config.nativeRequired && (nativeAvailable !== true || nativeWorkers < 1)) {
     failures.push("native-compute-unavailable");
   }
   if (config.strictArtifactIntegrity && artifactValid !== true) {

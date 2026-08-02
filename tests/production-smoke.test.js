@@ -15,7 +15,7 @@ test("production smoke accepts a strict native-ready service", () => {
     dataReady: true,
     nativeRequired: true,
     nativeAvailable: true,
-    readyWorkers: 4,
+    readyWorkers: 0,
     strictArtifacts: true,
     artifactValid: true,
     eventChainValid: true,
@@ -23,10 +23,18 @@ test("production smoke accepts a strict native-ready service", () => {
   }));
   assert.doesNotThrow(() => validateHealth({
     status: "ok",
-    compute: { native: { available: true, readyWorkers: 4 } },
+    compute: { native: { available: true, workers: 4, readyWorkers: 0, busy: 4 } },
     platform: { artifacts: { strict: true, valid: true } },
   }, { requireStrict: true }));
 });
+test("production smoke rejects an empty native worker pool", () => {
+  assert.throws(() => validateHealth({
+    status: "ok",
+    compute: { native: { available: true, workers: 0, readyWorkers: 0 } },
+    platform: { artifacts: { strict: true, valid: true } },
+  }, { requireStrict: true }), /worker pool/i);
+});
+
 test("production smoke rejects degraded readiness", () => {
   assert.throws(() => validateReadiness({
     ready: false,

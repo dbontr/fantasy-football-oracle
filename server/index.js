@@ -18,6 +18,7 @@ const { NativeEnginePool } = require("./native-engine-pool.js");
 const { HybridComputePool } = require("./hybrid-compute-pool.js");
 const { PlatformControlPlane } = require("./platform-control-plane.js");
 const { publicErrorPayload, statusForError } = require("./http-errors.js");
+const { createShutdownController, installSignalHandlers } = require("./lifecycle.js");
 
 const STATIC_FILES = new Set([
   "index.html",
@@ -205,13 +206,8 @@ async function start() {
   });
   server.log.info({ address }, "Fantasy Football Oracle server ready");
 
-  const shutdown = async (signal) => {
-    server.log.info({ signal }, "Shutting down Fantasy Football Oracle");
-    await server.close();
-    process.exit(0);
-  };
-  process.once("SIGINT", () => shutdown("SIGINT"));
-  process.once("SIGTERM", () => shutdown("SIGTERM"));
+  const shutdown = createShutdownController({ server });
+  installSignalHandlers({ shutdown });
 }
 
 module.exports = {

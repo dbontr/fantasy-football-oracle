@@ -91,6 +91,19 @@ npm run artifacts:validate
 
 A changed manifest without the corresponding reviewed source/model change is a release blocker.
 
+## Deployment doctor
+
+Run the deployment doctor before starting or promoting an instance:
+
+```bash
+npm run doctor
+NODE_ENV=production ORACLE_NATIVE_REQUIRED=true ORACLE_STRICT_ARTIFACT_INTEGRITY=true npm run doctor -- --strict
+```
+
+The report checks Node compatibility, production policy, Git cleanliness and upstream drift, artifact bytes, the native capability handshake, and writable runtime directories. A strict failure is a deployment blocker. Warnings remain visible in development mode rather than being silently converted into passes.
+
+On Windows, the scheduled-task manager executes the strict doctor automatically before each start. `npm run service:windows:status` reports task state, validated process identity, readiness, port, repository root, and log locations. `npm run service:windows:smoke` then verifies strict readiness and the browser shell.
+
 ## Incident priorities
 
 ### Required feed unavailable

@@ -227,9 +227,13 @@ node scripts/verify-backup.js --package <package>
 node scripts/disaster-recovery-drill.js --package <package> --full
 npm run check
 npm test
+npm run doctor
 npm run benchmark:native
 npm start
 npm run smoke:production -- --base http://127.0.0.1:8787 --strict
+npm run service:windows:install
+npm run service:windows:status
+npm run service:windows:smoke
 npm run dev
 ```
 
@@ -324,6 +328,9 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for Docker, Azure App Service, pe
 
 CI builds and starts the production container, runs it with a read-only root filesystem, dropped Linux capabilities, and `no-new-privileges`, then executes the strict readiness and browser-shell smoke test.
 
+On Windows, `scripts/windows/oracle-service.ps1` installs an at-logon scheduled task that runs the strict deployment doctor before starting Oracle, validates readiness before reporting success, tracks the child PID, writes service logs under `data/runtime/service`, and supports start, stop, restart, status, smoke, and uninstall actions. Optional local settings belong in ignored `.env.local`; the parser accepts only literal `NAME=value` entries and never executes the file.
+Pass `-RuntimeDir <path>` after `--` on any `service:windows:*` npm command to isolate state, PID tracking, and logs from the default `data/runtime` directory.
+
 ## Verification
 
 ```bash
@@ -354,8 +361,9 @@ Verification currently covers:
 - client/server syntax and dependency audit
 - Linux and Windows CI verification, including native build caching and recovery restore
 - proxy-safe administrative authorization, sanitized error responses, readiness semantics, and hardened production-container smoke testing
+- timeout-bounded idempotent shutdown, deployment-doctor policy checks, and Windows service-script validation
 
-The current suite contains 122 passing tests, including health and recovery intelligence, coaching intelligence, contextual factor centering, uncertainty decomposition, native expected regret, model-readiness reporting, dataset preload, and crash-reload recovery.
+The current suite includes health and recovery intelligence, coaching intelligence, contextual factor centering, uncertainty decomposition, native expected regret, model-readiness reporting, dataset preload, and crash-reload recovery.
 
 ## Repository layout
 
@@ -378,9 +386,12 @@ The current suite contains 122 passing tests, including health and recovery inte
 - `data/health-calibration-2026.json` — compact historical availability and recovery priors
 - `data/opportunity-2026.json` — compact validated usage models, 2026 profiles, and historical analogs
 - `server/index.js` — Fastify application entrypoint
+- `server/lifecycle.js` — idempotent, timeout-bounded process shutdown
 - `app.js` — browser state, rendering, PWA behavior, and integrations
 - `app-core.js` — deterministic offline/fallback engine
 - `simulation-worker.js` — browser draft fallback
+- `scripts/oracle-doctor.js` — deployment drift, policy, artifact, native, and runtime preflight
+- `scripts/windows/oracle-service.ps1` — Windows scheduled-task lifecycle and readiness manager
 - `scripts/benchmark-native.js` — native-versus-JavaScript benchmark
 - `scripts/build-historical-data.js` — archived preseason ranking and nflverse outcome builder
 - `scripts/build-opportunity-profiles.js` — leakage-safe position-model trainer and profile builder
