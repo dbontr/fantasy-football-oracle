@@ -1,6 +1,6 @@
 {
   "version": "oracle-artifacts-2026.1",
-  "commit": "52ce77c87714bd01c28517b2fd360f7fa7ee7235",
+  "commit": "121661ea2af7c75b0e199a8cc4802b6abfef2166",
   "files": [
     {
       "path": "artifacts/sbom.cdx.json",
@@ -49,10 +49,10 @@
     },
     {
       "path": "package.json",
-      "bytes": 4461,
-      "sha256": "0931f9533f9e0ec914f54b63f6f9773f47dd9c021d0f924a9056bd611bfea56d"
+      "bytes": 5769,
+      "sha256": "db079d3479327900aad3b95fe33cac5409aab62f81144f80b42bad89ec00fea9"
     }
   ],
   "generatedAt": null,
-  "semanticDigest": "f0333f34fcd08b7d8450db78f8c3e446e79ea2952ef5d67ce587fc461d171ded"
+  "semanticDigest": "9843bb76cec03ace5f5e9e773a72e5fad685767e8b0bdb6f34e58c6c79b4b9e4"
 }
