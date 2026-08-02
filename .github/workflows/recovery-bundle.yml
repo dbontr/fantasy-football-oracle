@@ -1,0 +1,72 @@
+name: Build verified recovery bundle
+
+"on":
+  workflow_dispatch: {}
+  schedule:
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-recovery-bundle
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out every ref required by the Git bundle
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags and remote refs
+        run: git fetch --all --tags --prune
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate committed artifacts
+        run: npm run artifacts:validate
+
+      - name: Create verified package
+        shell: bash
+        run: |
+          node scripts/backup-oracle.js --out "$RUNNER_TEMP/recovery" --read-only
+          PACKAGE="$(find "$RUNNER_TEMP/recovery" -mindepth 1 -maxdepth 1 -type d -name 'oracle-*' | head -n 1)"
+          test -n "$PACKAGE"
+          node scripts/verify-backup.js --package "$PACKAGE"
+          node scripts/disaster-recovery-drill.js --package "$PACKAGE" --skip-install
+          echo "PACKAGE=$PACKAGE" >> "$GITHUB_ENV"
+
+      - name: Upload immutable workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-recovery-${{ github.sha }}-${{ github.run_id }}
+          path: ${{ env.PACKAGE }}
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
+
+      - name: Emit recovery summary
+        shell: bash
+        run: |
+          {
+            echo "## Verified recovery package"
+            echo ""
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Workflow run: ${GITHUB_RUN_ID}"
+            echo "- Git bundle: verified"
+            echo "- Checksums: verified"
+            echo "- Asset archive: path-safe"
+            echo "- Isolated restore drill: passed"
+            echo "- Retention: 90 days"
+          } >> "$GITHUB_STEP_SUMMARY"
