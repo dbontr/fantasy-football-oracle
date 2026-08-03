@@ -8,6 +8,8 @@ const test = require("node:test");
 
 const sourceDataset = require("../data/players-2026.json");
 const { FreeIntelligence } = require("../server/free-intelligence.js");
+const { applyContextPolicy } = require("../server/free-context-policy.js");
+const { applyCalibration } = require("../server/probabilistic-calibration.js");
 const { applyProjectionModel } = require("../server/projection-model.js");
 const { forecastPlayer } = require("../server/probabilistic-forecast.js");
 const { EvidenceStore } = require("../server/evidence-store.js");
@@ -103,6 +105,46 @@ test("free intelligence applies the approved calibration before journaling", asy
     assert.equal(recorded[0].inserted, true);
     assert.equal(context.service.status().journal.forecasts, 1);
     assert.equal(context.service.journalReport().summary.samples, 0);
+  } finally {
+    await cleanup(context);
+  }
+});
+
+test("free intelligence applies context after base calibration", async () => {
+  const context = await createService();
+  try {
+    const player = dataset.players.find((row) => row.position === "WR" && row.weeklyProjections[0] > 0);
+    const features = [
+      ["role.air_yards_share", 0.5],
+      ["role.wopr", 0.9],
+      ["efficiency.receiving_epa_per_target", 0.5],
+      ["role.opportunity_trend", 1],
+      ["efficiency.points_per_opportunity_trend", 0.5],
+    ];
+    await context.evidence.ingestMany(features.map(([feature, value]) => ({
+      entityType: "player",
+      entityId: String(player.id),
+      feature,
+      value,
+      source: { name: "runtime-order-fixture", reliability: 0.9 },
+      confidence: 0.9,
+      observedAt: new Date(NOW).toISOString(),
+      expiresAt: new Date(NOW + 24 * 60 * 60 * 1000).toISOString(),
+    })));
+    const raw = forecastPlayer(player, context.evidence, {
+      week: 1,
+      asOf: new Date(NOW).toISOString(),
+    });
+    const model = context.service.calibrationModel();
+    const policy = context.service.contextPolicy.load();
+    const expected = applyContextPolicy(applyCalibration(raw, model), policy);
+    const reversed = applyCalibration(applyContextPolicy(raw, policy), model);
+    const actual = context.service.calibrateForecast(raw);
+    assert.equal(actual.contextPolicy.applied, true);
+    assert.notEqual(actual.contextPolicy.correction, 0);
+    assert.equal(actual.distribution.mean, expected.distribution.mean);
+    assert.equal(actual.calibration.original.mean, raw.distribution.mean);
+    assert.notEqual(reversed.calibration.original.mean, raw.distribution.mean);
   } finally {
     await cleanup(context);
   }

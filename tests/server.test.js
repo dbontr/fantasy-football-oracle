@@ -207,7 +207,7 @@ test("full-stack server exposes health, data, static shell, and compute routes",
     assert.equal(payload.historical.draftPolicy.marketWeight, 0.72);
     assert.equal(payload.healthIntelligence.version, "test-health");
     assert.equal(payload.healthIntelligence.affectedPlayers, 1);
-    assert.equal(payload.platform.version, "oracle-platform-2026.3-v5.1");
+    assert.equal(payload.platform.version, "oracle-platform-2026.4-v5.2");
     assert.equal(payload.platform.eventStore.filePath, undefined);
     assert.equal(payload.platform.snapshots.directory, undefined);
     assert.equal(payload.platform.models.domains.projection.champion, "oracle-ensemble-2026.5-health");
@@ -275,7 +275,7 @@ test("full-stack server exposes health, data, static shell, and compute routes",
     const status = await server.inject({ method: "GET", url: "/api/platform/status" });
     assert.equal(status.statusCode, 200);
     const platform = status.json();
-    assert.equal(platform.version, "oracle-platform-2026.3-v5.1");
+    assert.equal(platform.version, "oracle-platform-2026.4-v5.2");
     assert.equal(platform.eventStore.filePath, undefined);
     assert.equal(platform.snapshots.directory, undefined);
     assert.match(platform.buildFingerprint, /^[a-f0-9]{64}$/);

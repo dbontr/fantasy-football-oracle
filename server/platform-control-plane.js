@@ -20,7 +20,7 @@ const { DriftMonitor } = require("./drift-monitor.js");
 const { AdvancedIntelligence } = require("./advanced-intelligence.js");
 const { FreeIntelligence } = require("./free-intelligence.js");
 
-const PLATFORM_VERSION = "oracle-platform-2026.3-v5.1";
+const PLATFORM_VERSION = "oracle-platform-2026.4-v5.2";
 const REQUEST_STARTED = Symbol("oracleRequestStarted");
 const DECISION_ROUTES = Object.freeze({
   "/api/draft/simulate": "draft-simulation",
@@ -123,12 +123,12 @@ class PlatformControlPlane {
         ? path.join(this.runtimeDir, "free-intelligence")
         : this.config.freeRuntimeDir || path.join(this.runtimeDir, "free-intelligence")),
       seedCalibrationPath: this.config.freeCalibrationPath,
+      contextPolicyPath: this.config.freeContextPolicyPath,
       enabledSources: this.config.freeSources || [],
       syncEnabled: this.config.freeSyncEnabled === true,
       syncIntervalMs: this.config.freeSyncIntervalMs,
       sleeperLeagueId: this.config.sleeperLeagueId,
-      openMeteoNonCommercialAcknowledged:
-        this.config.openMeteoNonCommercialAcknowledged === true,
+      nwsUserAgent: this.config.nwsUserAgent,
       maxJournalRecords: this.config.maxForecastJournalRecords,
       clock: this.clock,
       logger: this.log,
@@ -557,6 +557,11 @@ class PlatformControlPlane {
   freeCalibrationStatus() {
     this.ensureInitialized();
     return this.free.status().calibration;
+  }
+
+  freeContextPolicyStatus() {
+    this.ensureInitialized();
+    return this.free.status().contextPolicy;
   }
 
   freeJournalReport(options = {}) {

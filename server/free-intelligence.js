@@ -5,16 +5,21 @@ const path = require("node:path");
 
 const { atomicWrite } = require("./event-store.js");
 const { ForecastJournal } = require("./forecast-journal.js");
+const {
+  DEFAULT_CONTEXT_POLICY_PATH,
+  FreeContextPolicyLoader,
+  applyContextPolicy,
+} = require("./free-context-policy.js");
 const { FreeCalibrationLoader, validateCalibrationDocument } = require("./free-calibration-loader.js");
 const { FREE_SOURCES, publicSourceCatalog } = require("./free-source-catalog.js");
 const { FreeSourceCache } = require("./free-source-cache.js");
 const { NflverseConnector } = require("./nflverse-connector.js");
-const { OpenMeteoConnector } = require("./open-meteo-connector.js");
+const { NwsConnector } = require("./nws-connector.js");
 const { PlayerIdentityResolver } = require("./player-identity.js");
 const { applyCalibration, validateCalibration } = require("./probabilistic-calibration.js");
 const { SleeperConnector } = require("./sleeper-connector.js");
 
-const FREE_INTELLIGENCE_VERSION = "oracle-free-intelligence-2026.1";
+const FREE_INTELLIGENCE_VERSION = "oracle-free-intelligence-2026.2";
 const DEFAULT_SEED_CALIBRATION = path.resolve(
   __dirname,
   "..",
@@ -63,6 +68,9 @@ class FreeIntelligence {
     this.runtimeCalibrationPath = path.resolve(
       options.runtimeCalibrationPath || path.join(this.runtimeDir, "calibration.json"),
     );
+    this.contextPolicyPath = path.resolve(
+      options.contextPolicyPath || DEFAULT_CONTEXT_POLICY_PATH,
+    );
     this.clock = options.clock || Date.now;
     this.log = options.logger || console;
     this.eventStore = options.eventStore || null;
@@ -72,8 +80,7 @@ class FreeIntelligence {
       options.syncIntervalMs || 6 * 60 * 60 * 1000,
     ));
     this.sleeperLeagueId = options.sleeperLeagueId || null;
-    this.openMeteoNonCommercialAcknowledged =
-      options.openMeteoNonCommercialAcknowledged === true;
+    this.nwsUserAgent = String(options.nwsUserAgent || "").trim() || undefined;
     this.cache = options.cache || new FreeSourceCache({
       rootDir: path.join(this.runtimeDir, "cache"),
       sources: FREE_SOURCES,
@@ -85,10 +92,11 @@ class FreeIntelligence {
       maxRecords: options.maxJournalRecords || 200_000,
     });
     this.calibration = new FreeCalibrationLoader({ filePath: this.runtimeCalibrationPath });
+    this.contextPolicy = new FreeContextPolicyLoader({ filePath: this.contextPolicyPath });
     this.identity = null;
     this.sleeper = null;
     this.nflverse = null;
-    this.openMeteo = null;
+    this.nws = null;
     this.initialized = false;
     this.timer = null;
     this.syncPromise = null;
@@ -135,13 +143,14 @@ class FreeIntelligence {
     this.nflverse = new NflverseConnector({
       cache: this.cache,
       identityResolver: this.identity,
+      datasetProvider: this.datasetProvider,
       clock: this.clock,
     });
-    this.openMeteo = new OpenMeteoConnector({
+    this.nws = new NwsConnector({
       cache: this.cache,
       datasetProvider: this.datasetProvider,
       clock: this.clock,
-      nonCommercialAcknowledged: this.openMeteoNonCommercialAcknowledged,
+      userAgent: this.nwsUserAgent,
     });
     return this.identity.status();
   }
@@ -151,6 +160,7 @@ class FreeIntelligence {
     await fs.mkdir(this.runtimeDir, { recursive: true });
     await this.installSeedCalibration();
     this.calibration.load({ optional: true, force: true });
+    this.contextPolicy.load({ optional: true, force: true });
     await this.journal.initialize();
     this.refreshIdentity();
     this.initialized = true;
@@ -164,7 +174,9 @@ class FreeIntelligence {
 
   calibrateForecast(forecast) {
     const model = this.calibrationModel();
-    return model ? applyCalibration(forecast, model) : forecast;
+    const calibrated = model ? applyCalibration(forecast, model) : forecast;
+    const policy = this.contextPolicy.load({ optional: true });
+    return policy ? applyContextPolicy(calibrated, policy) : calibrated;
   }
 
   async recordForecasts(forecasts, options = {}) {
@@ -187,7 +199,7 @@ class FreeIntelligence {
 
   allowedProviders(requested = null) {
     const providers = requested ? sourceList(requested) : [...this.enabledSources];
-    const supported = new Set(["sleeper", "nflverse", "open-meteo"]);
+    const supported = new Set(["sleeper", "nflverse", "nws"]);
     const invalid = providers.filter((provider) => !supported.has(provider));
     if (invalid.length) {
       throw Object.assign(new Error(`Unsupported free sources: ${invalid.join(", ")}`), {
@@ -201,6 +213,20 @@ class FreeIntelligence {
       });
     }
     return providers;
+  }
+
+  async ingestObservations(rows = []) {
+    const observations = Array.isArray(rows) ? rows : [];
+    if (!observations.length) return { accepted: 0, duplicates: 0, batches: 0 };
+    const batchSize = Math.max(1, Number(this.advanced.maxEvidenceBatch || 500));
+    const summary = { accepted: 0, duplicates: 0, batches: 0 };
+    for (let index = 0; index < observations.length; index += batchSize) {
+      const result = await this.advanced.ingestEvidence(observations.slice(index, index + batchSize));
+      summary.accepted += Number(result.accepted || 0);
+      summary.duplicates += Number(result.duplicates || 0);
+      summary.batches += 1;
+    }
+    return summary;
   }
 
   compactProviderResult(provider, result) {
@@ -227,7 +253,7 @@ class FreeIntelligence {
         attribution: result.attribution,
       };
     }
-    if (provider === "open-meteo") {
+    if (provider === "nws") {
       return {
         ok: true,
         stale: result.stale,
@@ -247,6 +273,7 @@ class FreeIntelligence {
       currentWeek: result.currentWeek,
       players: result.players,
       outcomeSummary: result.outcomeSummary,
+      features: result.features,
       observations: result.observations.length,
       attribution: result.attribution,
     };
@@ -259,9 +286,7 @@ class FreeIntelligence {
         leagueId: options.leagueId || this.sleeperLeagueId,
         week: options.currentWeek,
       });
-      const ingestion = result.observations.length
-        ? await this.advanced.ingestEvidence(result.observations)
-        : { accepted: 0, duplicates: 0 };
+      const ingestion = await this.ingestObservations(result.observations);
       return {
         raw: result,
         public: {
@@ -273,15 +298,13 @@ class FreeIntelligence {
         },
       };
     }
-    if (provider === "open-meteo") {
-      const result = await this.openMeteo.sync({
+    if (provider === "nws") {
+      const result = await this.nws.sync({
         week: options.currentWeek || options.week,
         maximumGames: options.maximumGames,
         force: options.force,
       });
-      const ingestion = result.observations.length
-        ? await this.advanced.ingestEvidence(result.observations)
-        : { accepted: 0, duplicates: 0 };
+      const ingestion = await this.ingestObservations(result.observations);
       return {
         raw: result,
         public: {
@@ -297,11 +320,10 @@ class FreeIntelligence {
         season,
         currentWeek,
         lookback: options.lookback,
+        featureDatasets: options.featureDatasets,
         force: options.force,
       });
-      const ingestion = result.observations.length
-        ? await this.advanced.ingestEvidence(result.observations)
-        : { accepted: 0, duplicates: 0 };
+      const ingestion = await this.ingestObservations(result.observations);
       const settlements = await this.journal.settleOutcomes(result.outcomes, {
         currentWeek,
         observedAt: this.clock(),
@@ -456,6 +478,7 @@ class FreeIntelligence {
       },
       identity: this.identity?.status() || null,
       calibration,
+      contextPolicy: this.contextPolicy.status(),
       journal: {
         version: journal.version,
         initialized: journal.initialized,
@@ -476,6 +499,7 @@ class FreeIntelligence {
     return {
       journal: await this.journal.verifyFile(),
       calibration: this.calibration.status(),
+      contextPolicy: this.contextPolicy.status(),
     };
   }
 

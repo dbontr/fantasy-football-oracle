@@ -242,7 +242,9 @@ test("free source attribution and calibration scorecards are public and path saf
   assert.equal(sourceBody.networkAtStartup, false);
   assert.equal(sourceBody.sources.catalog.sources.some((row) => row.id === "sleeper"), true);
   assert.equal(sourceBody.sources.catalog.sources.some((row) => row.id === "nflverse"), true);
-  assert.equal(sourceBody.sources.catalog.sources.some((row) => row.id === "open-meteo"), true);
+  assert.equal(sourceBody.sources.catalog.sources.some((row) => row.id === "nws"), true);
+  assert.equal(sourceBody.sources.catalog.policy.valid, true);
+  assert.deepEqual(sourceBody.sync.enabledSources.sort(), ["nflverse", "nws", "sleeper"]);
   assert.equal(JSON.stringify(sourceBody).includes("filePath"), false);
   assert.equal(JSON.stringify(sourceBody).includes("\\"), false);
 
@@ -256,7 +258,14 @@ test("free source attribution and calibration scorecards are public and path saf
   const report = await server.inject({ method: "GET", url: "/api/v5/calibration/report" });
   assert.equal(report.statusCode, 200, report.body);
   assert.equal(report.json().calibration.approved, true);
+  assert.equal(report.json().contextPolicy.approved, true);
+  assert.equal(report.json().contextPolicy.validation.productionOrderMatched, true);
   assert.equal(report.json().journal.summary.samples, 0);
+
+  const policy = await server.inject({ method: "GET", url: "/api/v5/context-policy/status" });
+  assert.equal(policy.statusCode, 200, policy.body);
+  assert.equal(policy.json().approved, true);
+  assert.equal(policy.json().holdoutSeason, 2025);
 });
 
 test("free source sync and journal recalibration remain administrative", async (context) => {

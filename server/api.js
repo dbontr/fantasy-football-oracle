@@ -270,6 +270,8 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
   const advancedEvidenceValid = advanced?.evidence?.valid ?? null;
   const freeReady = free === null ? null : free.initialized === true;
   const freeJournalValid = free?.journal?.valid ?? null;
+  const freeContextPolicyValid = free?.contextPolicy?.valid ?? null;
+  const freeContextPolicyApproved = free?.contextPolicy?.approved ?? null;
 
   if (data.ready !== true) failures.push("player-data-unavailable");
   if (config.nativeRequired && (nativeAvailable !== true || liveWorkers < 1)) {
@@ -284,6 +286,9 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
   }
   if (free && (freeReady !== true || freeJournalValid !== true)) {
     failures.push("free-journal-invalid");
+  }
+  if (free && (freeContextPolicyValid !== true || freeContextPolicyApproved !== true)) {
+    failures.push("free-context-policy-invalid");
   }
 
   return {
@@ -303,6 +308,8 @@ function readinessSnapshot({ config, dataStore, pool, controlPlane }) {
     advancedEvidenceValid,
     freeReady,
     freeJournalValid,
+    freeContextPolicyValid,
+    freeContextPolicyApproved,
     failures,
   };
 }
@@ -596,8 +603,13 @@ async function registerApiRoutes(fastify, services) {
     .header("cache-control", "no-store")
     .send({
       calibration: controlPlane.freeCalibrationStatus(),
+      contextPolicy: controlPlane.freeContextPolicyStatus(),
       journal: controlPlane.freeJournalReport(),
     }));
+
+  fastify.get("/api/v5/context-policy/status", async (_request, reply) => reply
+    .header("cache-control", "no-store")
+    .send(controlPlane.freeContextPolicyStatus()));
 
   fastify.post("/api/v5/free-sources/sync", {
     config: computeRouteConfig(3),
@@ -607,12 +619,18 @@ async function registerApiRoutes(fastify, services) {
       properties: {
         providers: {
           type: "array", minItems: 1, maxItems: 3, uniqueItems: true,
-          items: { type: "string", enum: ["sleeper", "nflverse", "open-meteo"] },
+          items: { type: "string", enum: ["sleeper", "nflverse", "nws"] },
         },
         force: { type: "boolean" },
         season: { type: "integer", minimum: 1999, maximum: 2100 },
         currentWeek: { type: "integer", minimum: 1, maximum: 22 },
         lookback: { type: "integer", minimum: 2, maximum: 8 },
+        featureDatasets: {
+          type: "array", maxItems: 5, uniqueItems: true,
+          items: { type: "string", enum: [
+            "injuries", "depthCharts", "snapCounts", "weeklyRosters", "teamStats",
+          ] },
+        },
         maximumGames: { type: "integer", minimum: 1, maximum: 20 },
         leagueId: { type: "string", minLength: 1, maxLength: 80 },
       },

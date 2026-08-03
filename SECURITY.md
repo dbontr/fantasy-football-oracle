@@ -24,7 +24,7 @@ Do not include access tokens, private medical records, account identifiers, or l
 
 Free connectors do not accept user-supplied URLs. Each source has fixed HTTPS origins, fixed path prefixes, narrowly scoped redirect origins, response byte limits, cache freshness rules, and a circuit breaker. Cached payloads are SHA-256 verified before every use. Source synchronization and calibration rebuilds are administrator-only.
 
-The application performs no network synchronization during startup. Public what-if forecasts cannot write evidence and are excluded from the production forecast journal. Raw provider caches are ignored by Git and should not contain credentials. Open-Meteo remains disabled unless the operator explicitly acknowledges the hosted free tier's non-commercial restriction.
+The application performs no network synchronization during startup. Public what-if forecasts cannot write evidence and are excluded from the production forecast journal. Raw provider caches are ignored by Git and should not contain credentials. The perpetual-free source policy rejects providers requiring keys, OAuth, mandatory accounts, payment methods, trials, expiring access, restricted hosted tiers, or paid fallbacks before any request is made. The shipped Sleeper, nflverse, and NWS connectors remain failure-isolated and perform no synchronization during startup.
 
 ## Administrative surfaces
 

@@ -16,7 +16,7 @@ const state = {
 const elements = {};
 const ids = [
   "lab-health", "evidence-count", "chain-status", "feature-count", "evidence-head",
-  "calibration-state", "calibration-detail", "calibration-gain", "journal-targets",
+  "calibration-state", "calibration-detail", "context-policy-state", "context-policy-detail", "journal-targets",
   "journal-detail", "source-state", "source-detail", "source-attribution",
   "week-select", "scenario-select", "risk-range", "risk-output", "seed-input",
   "run-forecast-button", "player-search", "position-tabs", "player-list",
@@ -212,6 +212,13 @@ function rangePosition(value, maximum) {
   return Math.max(0, Math.min(100, maximum > 0 ? number(value) / maximum * 100 : 0));
 }
 
+function contextPolicyMarkup(forecast = {}) {
+  const policy = forecast.contextPolicy;
+  if (!policy?.applied) return "";
+  const sign = number(policy.correction) > 0 ? "+" : "";
+  return `<span class="driver-chip is-context">public context ${sign}${points(policy.correction)}</span>`;
+}
+
 function contributionMarkup(contributions = []) {
   const rows = contributions.slice(0, 4);
   if (!rows.length) return '<span class="driver-chip">Baseline model only</span>';
@@ -253,7 +260,7 @@ function forecastCard(forecast, maximum) {
         <div><span>Floor P10</span><strong>${points(distribution.p10)}</strong></div>
         <div><span>Ceiling P90</span><strong>${points(distribution.p90)}</strong></div>
       </div>
-      <div class="driver-line">${contributionMarkup(forecast.contributions)}</div>
+      <div class="driver-line">${contextPolicyMarkup(forecast)}${contributionMarkup(forecast.contributions)}</div>
       <div class="forecast-actions">
         <button type="button" data-portfolio="alpha" data-player-id="${escapeHtml(id)}">Add to Slate A</button>
         <button type="button" data-portfolio="beta" data-player-id="${escapeHtml(id)}">Add to Slate B</button>
@@ -487,20 +494,28 @@ async function loadApplication() {
   elements["calibration-detail"].textContent = calibration.approved
     ? `Holdout ${calibration.holdoutSeason} · ${calibration.digest?.slice(0, 8) || "verified"}`
     : "Raw distributions remain active";
-  const wisGain = number(evaluation.improvement?.wis, 0);
-  elements["calibration-gain"].textContent = wisGain > 0 ? `+${wisGain.toFixed(3)}` : wisGain.toFixed(3);
+  const contextPolicy = free.contextPolicy || {};
+  const contextGain = number(contextPolicy.validation?.improvement?.wis, 0);
+  elements["context-policy-state"].textContent = contextPolicy.approved
+    ? `+${contextGain.toFixed(3)} WIS` : "Fallback";
+  elements["context-policy-state"].classList.toggle("is-approved", contextPolicy.approved === true);
+  elements["context-policy-state"].classList.toggle("is-warning", contextPolicy.approved !== true);
+  elements["context-policy-detail"].textContent = contextPolicy.approved
+    ? `Nested holdout ${contextPolicy.holdoutSeason} · ${contextPolicy.digest?.slice(0, 8) || "verified"}`
+    : "Deep context corrections inactive";
   elements["journal-targets"].textContent = number(free.journal?.trainingTargets).toLocaleString();
   elements["journal-detail"].textContent = `${number(free.journal?.forecasts).toLocaleString()} forecasts · ${number(free.journal?.settlements).toLocaleString()} settled`;
   const enabledSources = free.sync?.enabledSources || [];
   const sourceFailures = number(free.sync?.last?.failures);
+  const scheduledSync = free.sync?.enabled === true;
   elements["source-state"].textContent = enabledSources.length
-    ? sourceFailures ? "Degraded" : "Enabled"
+    ? sourceFailures ? "Degraded" : scheduledSync ? "Scheduled" : "Ready"
     : "Offline";
   elements["source-state"].classList.toggle("is-approved", enabledSources.length > 0 && sourceFailures === 0);
   elements["source-state"].classList.toggle("is-warning", sourceFailures > 0);
   elements["source-detail"].textContent = enabledSources.length
-    ? enabledSources.join(" · ")
-    : "optional synchronization disabled";
+    ? `${enabledSources.join(" · ")} · ${scheduledSync ? "automatic" : "manual"} sync`
+    : "no public synchronization configured";
   const attributions = free.sources?.catalog?.sources?.map((row) => row.attribution) || [];
   elements["source-attribution"].textContent = attributions.join(" · ") || "No public feed attribution loaded";
   setHealth(

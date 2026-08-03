@@ -37,7 +37,7 @@ async function fixture() {
     allowInsecureLocalhost: true,
     failureThreshold: 2,
     circuitOpenMs: 60_000,
-    sources: [{ id: "fixture", origins: [origin], maxBytes: 1024, maxStaleMs: 60_000 }],
+    sources: [{ id: "fixture", origins: [origin], maxBytes: 1024, maxStaleMs: 60_000, license: "test", termsUrl: "https://example.test/terms", access: { anonymous: true, accountRequired: false, apiKeyRequired: false, oauthRequired: false }, cost: { priceUsd: 0, trialOnly: false, paymentMethodRequired: false, expires: false, paidFallbackRequired: false, quotaRequiresUpgrade: false }, operations: { offlineFallback: true, startupNetworkRequired: false, failureIsolated: true }, usage: { hostedFreeRestriction: false } }],
   });
   return { cache, directory, origin, server, state };
 }

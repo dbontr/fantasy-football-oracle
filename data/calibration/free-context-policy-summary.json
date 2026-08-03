@@ -1,0 +1,109 @@
+{
+  "version": "oracle-free-context-policy-2026.1",
+  "schemaVersion": "free-context-policy/v1",
+  "generatedAt": "2026-08-03T14:04:37.653Z",
+  "digest": "8b8fa0e6e6c27116221bfec996c027d9b06c16e8a65b9e87dca1f44292a19f0f",
+  "approved": true,
+  "trainingSeasons": [
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "validationSeason": 2024,
+  "holdoutSeason": 2025,
+  "selection": {
+    "alpha": 10,
+    "cap": 1.5,
+    "strength": 1
+  },
+  "validation": {
+    "nestedChronological": true,
+    "productionOrderMatched": true,
+    "correctionTarget": "post-calibration residual",
+    "examples": 31682,
+    "innerTrainingSamples": 18727,
+    "validationSamples": 6392,
+    "fullTrainingSamples": 25119,
+    "holdoutSamples": 6563,
+    "validation": {
+      "before": {
+        "samples": 6392,
+        "mae": 4.29508,
+        "rmse": 6.01897,
+        "bias": -0.09857,
+        "brier": 0.0643,
+        "logLoss": 0.22232,
+        "wis": 2.63814,
+        "meanPinball": 1.45808,
+        "interval80Coverage": 0.86827,
+        "interval80Width": 13.33855
+      },
+      "after": {
+        "samples": 6392,
+        "mae": 4.20628,
+        "rmse": 5.96262,
+        "bias": -0.10057,
+        "brier": 0.0643,
+        "logLoss": 0.22232,
+        "wis": 2.60107,
+        "meanPinball": 1.43887,
+        "interval80Coverage": 0.86342,
+        "interval80Width": 13.09803
+      }
+    },
+    "holdout": {
+      "before": {
+        "samples": 6563,
+        "mae": 4.25642,
+        "rmse": 5.97913,
+        "bias": 0.20008,
+        "brier": 0.06693,
+        "logLoss": 0.22795,
+        "wis": 2.59695,
+        "meanPinball": 1.43823,
+        "interval80Coverage": 0.8749,
+        "interval80Width": 13.42517
+      },
+      "after": {
+        "samples": 6563,
+        "mae": 4.18279,
+        "rmse": 5.93962,
+        "bias": 0.18635,
+        "brier": 0.06693,
+        "logLoss": 0.22795,
+        "wis": 2.56918,
+        "meanPinball": 1.42335,
+        "interval80Coverage": 0.87079,
+        "interval80Width": 13.15874
+      }
+    },
+    "improvement": {
+      "wis": 0.02777,
+      "rmse": 0.03951,
+      "mae": 0.07363,
+      "brier": 0,
+      "logLoss": 0,
+      "meanPinball": 0.01488,
+      "interval80Coverage": -0.00411
+    },
+    "checks": {
+      "validationWisImproved": true,
+      "holdoutWisImproved": true,
+      "holdoutRmseDidNotRegress": true,
+      "holdoutMaeDidNotRegress": true,
+      "holdoutCoverageIsCalibrated": true,
+      "correctionIsBounded": true
+    },
+    "correction": {
+      "mean": -0.014909787002695341,
+      "absoluteMean": 0.530428984850933
+    }
+  },
+  "modelSamples": {
+    "QB": 2577,
+    "RB": 6020,
+    "WR": 9624,
+    "TE": 4757
+  }
+}

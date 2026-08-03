@@ -27,6 +27,8 @@ function validateReadiness(payload = {}) {
   if (payload.freeReady !== null && payload.freeReady !== undefined) {
     assertCondition(payload.freeReady === true, "Free intelligence is not ready");
     assertCondition(payload.freeJournalValid === true, "Free forecast journal chain is invalid");
+    assertCondition(payload.freeContextPolicyValid === true, "Free context policy is invalid");
+    assertCondition(payload.freeContextPolicyApproved === true, "Free context policy is not approved");
   }
   if (payload.nativeRequired) {
     assertCondition(payload.nativeAvailable === true, "Required native engine is unavailable");
@@ -79,10 +81,14 @@ async function runSmoke(options = {}) {
   assertCondition(free.networkAtStartup === false, "Free intelligence performed network work at startup");
   assertCondition(free.journal?.valid === true, "Free forecast journal status is invalid");
   const calibration = await fetchJson(`${baseUrl}/api/v5/calibration/status`);
+  const contextPolicy = await fetchJson(`${baseUrl}/api/v5/context-policy/status`);
   assertCondition(calibration.valid === true, "Free calibration artifact is invalid");
   assertCondition(calibration.approved === true, "Free calibration is not holdout approved");
   assertCondition(calibration.validation?.leakageSafe === true, "Free calibration is not leakage safe");
-  return { baseUrl, readiness, health, rootStatus: root.status, labStatus: lab.status, v5, free, calibration };
+  assertCondition(contextPolicy.valid === true, "Free context policy artifact is invalid");
+  assertCondition(contextPolicy.approved === true, "Free context policy is not holdout approved");
+  assertCondition(contextPolicy.validation?.nestedChronological === true, "Free context policy lacks nested validation");
+  return { baseUrl, readiness, health, rootStatus: root.status, labStatus: lab.status, v5, free, calibration, contextPolicy };
 }
 async function main() {
   const result = await runSmoke({
@@ -104,7 +110,11 @@ async function main() {
     advancedEvidenceValid: result.readiness.advancedEvidenceValid,
     freeReady: result.readiness.freeReady,
     freeJournalValid: result.readiness.freeJournalValid,
+    freeContextPolicyValid: result.readiness.freeContextPolicyValid,
+    freeContextPolicyApproved: result.readiness.freeContextPolicyApproved,
     freeCalibrationApproved: result.calibration.approved,
+    freeContextPolicyHoldoutSeason: result.contextPolicy.holdoutSeason,
+    freeContextPolicyWisGain: result.contextPolicy.validation?.improvement?.wis,
     freeCalibrationHoldoutSeason: result.calibration.holdoutSeason,
     freeJournalForecasts: result.free.journal.forecasts,
     freeJournalSettlements: result.free.journal.settlements,

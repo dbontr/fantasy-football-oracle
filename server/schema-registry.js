@@ -3,9 +3,10 @@
 const { createLineage, sha256 } = require("./lineage.js");
 const { validateObservation } = require("./evidence-store.js");
 const { validateCalibrationDocument } = require("./free-calibration-loader.js");
+const { validateContextPolicyDocument } = require("./free-context-policy.js");
 const { validateRecord: validateForecastJournalRecord } = require("./forecast-journal.js");
 
-const SCHEMA_REGISTRY_VERSION = "oracle-schemas-2026.3-v5.1";
+const SCHEMA_REGISTRY_VERSION = "oracle-schemas-2026.4-v5.2";
 const SCHEMA_VERSIONS = Object.freeze({
   sourceRecord: "source-record/v1",
   playerEvent: "player-event/v1",
@@ -16,6 +17,7 @@ const SCHEMA_VERSIONS = Object.freeze({
   probabilisticForecast: "probabilistic-forecast/v1",
   portfolioDecision: "portfolio-decision/v1",
   probabilisticCalibration: "probabilistic-calibration/v1",
+  freeContextPolicy: "free-context-policy/v1",
   forecastJournalRecord: "forecast-journal-record/v1",
 });
 
@@ -212,6 +214,13 @@ function validateProbabilisticCalibration(value) {
     : { valid: false, errors: [result.error] };
 }
 
+function validateFreeContextPolicy(value) {
+  const result = validateContextPolicyDocument(value);
+  return result.valid
+    ? { valid: true, errors: [] }
+    : { valid: false, errors: [result.error] };
+}
+
 function validateForecastJournal(value) {
   const result = validateForecastJournalRecord(value);
   return result.valid
@@ -229,6 +238,7 @@ const VALIDATORS = Object.freeze({
   probabilisticForecast: validateProbabilisticForecast,
   portfolioDecision: validatePortfolioDecision,
   probabilisticCalibration: validateProbabilisticCalibration,
+  freeContextPolicy: validateFreeContextPolicy,
   forecastJournalRecord: validateForecastJournal,
 });
 
@@ -299,6 +309,7 @@ module.exports = {
   validateProbabilisticForecast,
   validatePortfolioDecision,
   validateProbabilisticCalibration,
+  validateFreeContextPolicy,
   validateForecastJournal,
   registrySummary,
   isPlainObject,

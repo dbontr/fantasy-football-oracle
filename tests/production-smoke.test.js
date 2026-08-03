@@ -24,6 +24,8 @@ test("production smoke accepts a strict native-ready service", () => {
     advancedEvidenceValid: true,
     freeReady: true,
     freeJournalValid: true,
+    freeContextPolicyValid: true,
+    freeContextPolicyApproved: true,
     failures: [],
   }));
   assert.doesNotThrow(() => validateHealth({

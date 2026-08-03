@@ -388,6 +388,7 @@ input[type="range"] { min-height: 42px; padding: 0; accent-color: var(--signal);
 .driver-chip { padding: 4px 7px; color: var(--muted); background: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: 999px; font-size: .61rem; }
 .driver-chip.is-up { color: var(--success); }
 .driver-chip.is-down { color: var(--risk); }
+.driver-chip.is-context { color: var(--distribution); border-color: var(--distribution); }
 .forecast-actions { display: flex; gap: 7px; margin-top: 12px; }
 .forecast-actions button { flex: 1; padding: 7px 8px; color: var(--chalk); background: transparent; border: 1px solid var(--line-strong); border-radius: 7px; cursor: pointer; font-size: .67rem; font-weight: 700; }
 .forecast-actions button:hover { color: var(--ink); background: var(--chalk); }

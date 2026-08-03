@@ -1,23 +1,23 @@
 # Fantasy Football Oracle
 
-Fantasy Football Oracle 5.0 is a temporal, probabilistic fantasy-football decision system for live drafts and in-season management. A C++20 analysis engine performs the expensive simulations and optimization while Node.js handles APIs, data refresh, security, ESPN/Sleeper integrations, and process orchestration.
+Fantasy Football Oracle 5.2 is a temporal, probabilistic fantasy-football decision system for live drafts and in-season management. A C++20 analysis engine performs the expensive simulations and optimization while Node.js handles APIs, data refresh, security, ESPN/Sleeper integrations, and process orchestration.
 
 The browser remains installable and responsive. It keeps a deterministic JavaScript engine and Web Worker for offline or degraded operation, but a healthy server routes analysis to persistent C++ workers.
 
-## Zero-cost public intelligence 5.1
+## Perpetually free public intelligence 5.2
 
-Version 5.1 adds free, optional evidence and continuous probabilistic learning without requiring a paid API:
+Version 5.2 removes trial-backed and commercially restricted hosted feeds from the public-intelligence path. Every shipped provider is anonymous, keyless, account-free, payment-free, and optional:
 
-- Sleeper public NFL state, player identity, injury, practice, depth-chart, trend, and optional league context;
-- nflverse CC-BY-4.0 player identities and weekly outcomes for rolling opportunity evidence, settlement, and walk-forward backtesting;
-- opt-in Open-Meteo game weather with venue-aware indoor skipping and required attribution;
-- a guarded ESPN/Sleeper/GSIS identity graph that refuses ambiguous or conflicting matches;
-- an append-only forecast journal with deterministic deduplication and settlement scoring;
-- proper probabilistic scores: Brier, log loss, pinball loss, weighted interval score, coverage, MAE, and RMSE;
-- position-aware calibration fitted on 2021-2024 and approved only after improvement on an untouched 2025 holdout;
-- offline startup, conditional caching, byte limits, origin and redirect allowlists, stale-if-error, and provider circuit breakers.
+- Sleeper public NFL state, identity, injury, practice, depth chart, trends, and optional league context;
+- nflverse CC-BY-4.0 identities, weekly outcomes, injury reports, depth charts, weekly rosters, snap counts, and team statistics;
+- NOAA National Weather Service kickoff weather for supported outdoor venues, with indoor skipping and per-game failure isolation;
+- a machine-enforced perpetual-free source policy that rejects trials, payment methods, keys, mandatory accounts, expiring access, restricted hosted tiers, and paid fallbacks before network access;
+- leakage-safe rolling air-yards share, WOPR, EPA efficiency, opportunity trend, role, health, line, pace, and matchup evidence from completed prior weeks only;
+- a digest-validated context policy fitted to post-calibration residuals, selected on 2024, and approved on an untouched 2025 holdout of 6,563 player-weeks;
+- a bounded +/-1.5-point correction that improved holdout WIS by 0.02777, RMSE by 0.03951, and MAE by 0.07363;
+- offline startup, conditional caching, byte limits, origin and redirect allowlists, stale-if-error, and circuit breakers.
 
-All public connectors are disabled by default. Provider downtime never blocks startup or readiness. Open-Meteo's hosted free tier is restricted to non-commercial use and requires explicit operator acknowledgement before synchronization.
+The three compliant providers are available for administrator-triggered refresh by default. Automatic synchronization remains off unless explicitly enabled. Provider outages never block startup; the signed forecast journal, calibration artifact, and approved context policy do participate in readiness and recovery integrity.
 
 ## Temporal probabilistic architecture 5.0
 
@@ -355,11 +355,12 @@ ORACLE_MAX_ADVANCED_FORECAST_PLAYERS=64
 ORACLE_MAX_ADVANCED_SCENARIOS=50000
 ORACLE_FREE_RUNTIME_DIR=
 ORACLE_FREE_CALIBRATION_PATH=
-ORACLE_FREE_SOURCES=
+ORACLE_FREE_CONTEXT_POLICY_PATH=
+ORACLE_FREE_SOURCES=sleeper,nflverse,nws
 ORACLE_FREE_SYNC_ENABLED=false
 ORACLE_FREE_SYNC_INTERVAL_MS=21600000
 ORACLE_SLEEPER_LEAGUE_ID=
-ORACLE_OPEN_METEO_NONCOMMERCIAL_ACK=false
+ORACLE_NWS_USER_AGENT=FantasyFootballOracle/5.2 (https://github.com/dbontr/fantasy-football-oracle)
 ORACLE_MAX_FORECAST_JOURNAL_RECORDS=200000
 ```
 
@@ -439,13 +440,17 @@ The current suite includes health and recovery intelligence, coaching intelligen
 - `server/scenario-engine.js` - correlated, order-independent paired future simulation
 - `server/robust-decision.js` - probability-of-best, regret, CVaR, Pareto, and sensitivity ranking
 - `server/advanced-intelligence.js` - v5 lifecycle, limits, digests, forecasts, and portfolios
-- `server/free-intelligence.js` - optional free-source sync, calibration, journaling, and promotion
-- `server/free-source-cache.js` - allowlisted conditional cache, stale fallback, and circuit breakers
+- `server/free-intelligence.js` - perpetual-free sync, calibration, context policy, journaling, and promotion
+- `server/free-source-policy.js` - machine-enforced no-trial, no-account, no-key, no-payment source contract
+- `server/free-source-cache.js` - allowlisted conditional cache, stale fallback, policy enforcement, and circuit breakers
 - `server/sleeper-connector.js` - free Sleeper player, trend, and league evidence
 - `server/nflverse-connector.js` - CC-BY nflverse identities, outcomes, and rolling evidence
-- `server/open-meteo-connector.js` - opt-in game weather with non-commercial acknowledgement
+- `server/nflverse-feature-store.js` - leakage-safe injury, role, snap, line, pace, and matchup feature ingestion
+- `server/nws-connector.js` - keyless NOAA/NWS kickoff weather with indoor skipping and game-level isolation
 - `server/forecast-journal.js` - hash-chained forecast and settlement learning history
 - `server/probabilistic-calibration.js` - proper scores and holdout-gated calibration
+- `server/free-context-policy.js` - signed post-calibration context corrections and runtime validation
+- `scripts/build-free-context-policy.js` - nested chronological policy builder and holdout report
 - `lab.html`, `lab.css`, `lab.js` - Research Lab for distributions, what-ifs, and paired slates
 - `server/coaching-model.js` — evidence-shrunk staff, scheme, leadership, and development model
 - `server/opportunity-model.js` — historical usage, regression, analog, and age-curve integration
@@ -478,13 +483,15 @@ The current suite includes health and recovery intelligence, coaching intelligen
 - `docs/ai/context-intelligence-results.md` — contextual model design, diagnostics, regret analysis, and browser validation
 - `docs/ai/opportunity-model-results.md` — feature set, leakage controls, holdout results, analogs, and integration
 - `docs/ai/health-news-intelligence-results.md` — data sources, calibration, return modeling, news safeguards, and limitations
+- docs/ai/perpetual-free-v5.2.md — perpetual-free source contract, runtime integration, holdout results, and limitations
+- docs/ai/free-context-policy-results.md — generated nested-validation scorecard for the signed context policy
 
 ## Remaining model limits
 
 - Projection quality remains dependent on available source data. C++ increases search depth and speed, not the truthfulness of upstream projections.
 - Coaching scores are conservative model priors, not objective personnel ratings; multi-season coach-player calibration remains a priority.
 - Historical usage models cover QB/RB/WR/TE and use weekly box-score opportunity rather than route participation, targets per route, red-zone opportunity, or tracking geometry. Role changes are damped by current market signals but cannot be inferred perfectly.
-- Team ecosystem, depth-chart share, and matchup grades are inference proxies until snap, route, tracking, betting, offensive-line, and weather feeds are connected.
+- Team ecosystem and matchup grades now receive public snap, team-stat, injury, depth-chart, and NWS evidence when available; route geometry, tracking, betting, and licensed line grades remain unavailable.
 - Health intelligence uses public designation, body-part, practice, and article metadata; exact diagnosis, surgery date, rehabilitation testing, and team medical clearance are often unavailable. Return estimates describe fantasy performance rather than medical recovery.
 - Version 5 defines, reconciles, and applies licensed-projection, betting-market, offensive-line, route, tracking, and weather evidence, but it does not bundle or fabricate those feeds. Production quality depends on observations supplied by authorized connectors.
 - Correlation currently uses transparent hand-specified latent-factor loadings. It is not yet calibrated from play-level covariance or a learned copula.

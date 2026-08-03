@@ -10,6 +10,7 @@ const sourceDataset = require("../data/players-2026.json");
 const { EvidenceStore, normalizeObservation } = require("../server/evidence-store.js");
 const { forecastRecord } = require("../server/forecast-journal.js");
 const committedCalibration = require("../data/calibration/free-probabilistic.json");
+const committedContextPolicy = require("../data/calibration/free-context-policy.json");
 const { forecastPlayer } = require("../server/probabilistic-forecast.js");
 const { applyProjectionModel } = require("../server/projection-model.js");
 const { rankPairedActions } = require("../server/robust-decision.js");
@@ -30,6 +31,7 @@ test("v5 schema registry advertises temporal decision contracts", () => {
   assert.equal(summary.schemas.portfolioDecision, "portfolio-decision/v1");
   assert.equal(summary.schemas.probabilisticCalibration, "probabilistic-calibration/v1");
   assert.equal(summary.schemas.forecastJournalRecord, "forecast-journal-record/v1");
+  assert.equal(summary.schemas.freeContextPolicy, "free-context-policy/v1");
 });
 
 test("normalized evidence satisfies the registered evidence schema", () => {
@@ -98,6 +100,13 @@ test("approved free calibration satisfies the registered calibration schema", ()
   assert.deepEqual(validateRecord("probabilisticCalibration", committedCalibration), {
     valid: true,
     errors: [],
+  });
+});
+
+test("approved free context policy satisfies the registered schema", () => {
+  assert.equal(committedContextPolicy.schemaVersion, SCHEMA_VERSIONS.freeContextPolicy);
+  assert.deepEqual(validateRecord("freeContextPolicy", committedContextPolicy), {
+    valid: true, errors: [],
   });
 });
 

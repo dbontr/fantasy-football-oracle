@@ -47,21 +47,24 @@ ORACLE_MAX_ADVANCED_SCENARIOS=50000
 
 Persistent evidence ingestion and raw evidence search are administrative routes. Public forecast and what-if requests cannot mutate the ledger. Back up the complete runtime directory so the evidence chain, event store, snapshots, registry, drift history, and decision ledger come from one recovery point.
 
-## Optional free intelligence
+## Perpetually free intelligence
 
-Free-source synchronization is disabled by default and startup remains offline. To enable selected providers:
+Oracle ships only public-intelligence providers that pass the runtime source policy: anonymous access, no account, no API key, no OAuth, zero price, no trial, no payment method, no expiry, no restricted hosted tier, no required paid fallback, offline startup, and isolated failure.
+
+The default provider set is available for bounded administrator-triggered refresh, while automatic synchronization remains off:
 
 ```text
-ORACLE_FREE_SOURCES=sleeper,nflverse
-ORACLE_FREE_SYNC_ENABLED=true
+ORACLE_FREE_SOURCES=sleeper,nflverse,nws
+ORACLE_FREE_SYNC_ENABLED=false
 ORACLE_FREE_SYNC_INTERVAL_MS=21600000
 ORACLE_SLEEPER_LEAGUE_ID=
-ORACLE_OPEN_METEO_NONCOMMERCIAL_ACK=false
+ORACLE_NWS_USER_AGENT=FantasyFootballOracle/5.2 (https://github.com/dbontr/fantasy-football-oracle)
+ORACLE_FREE_CONTEXT_POLICY_PATH=
 ```
 
-Keep Open-Meteo disabled unless the deployment satisfies its hosted free tier's non-commercial restriction and the operator explicitly sets the acknowledgement. Provider failure degrades only the optional sync component; it does not fail readiness. The local forecast journal and calibration digest do participate in integrity checks.
+Set `ORACLE_FREE_SYNC_ENABLED=true` only when scheduled outbound requests are desired. Sleeper, nflverse, and NWS can fail independently without failing startup. NWS weather is limited to supported U.S. forecast points; unsupported or international games degrade to no weather observation instead of switching to a trial or paid service.
 
-Persist `ORACLE_FREE_RUNTIME_DIR` with the rest of Oracle runtime state. It contains the forecast journal, runtime calibration, and source cache. Raw cache files may be discarded and refetched; the journal and runtime calibration must be restored from the same recovery point.
+Persist `ORACLE_FREE_RUNTIME_DIR` with the rest of Oracle runtime state. It contains the hash-chained forecast journal, runtime calibration, and source cache. Raw cache files may be discarded and refetched. Restore the journal and runtime calibration from the same recovery point. The committed context policy is a release artifact and readiness rejects it when missing, altered, unapproved, or inconsistent with production application order.
 
 ## Native engine settings
 

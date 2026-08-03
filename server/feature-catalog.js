@@ -2,7 +2,7 @@
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
-const FEATURE_CATALOG_VERSION = "oracle-features-2026.1";
+const FEATURE_CATALOG_VERSION = "oracle-features-2026.2";
 
 function numberFeature(family, unit, minimum, maximum, halfLifeMs, options = {}) {
   return Object.freeze({
@@ -21,11 +21,18 @@ const FEATURES = Object.freeze({
   "role.snap_share": numberFeature("opportunity", "ratio", 0, 1, 3 * DAY_MS),
   "role.route_share": numberFeature("opportunity", "ratio", 0, 1, 3 * DAY_MS),
   "role.target_share": numberFeature("opportunity", "ratio", 0, 1, 3 * DAY_MS),
+  "role.air_yards_share": numberFeature("opportunity", "ratio", 0, 1.5, 3 * DAY_MS),
+  "role.wopr": numberFeature("opportunity", "normalized", 0, 2, 3 * DAY_MS),
   "role.carry_share": numberFeature("opportunity", "ratio", 0, 1, 3 * DAY_MS),
   "role.red_zone_share": numberFeature("opportunity", "ratio", 0, 1, 3 * DAY_MS),
   "role.expected_opportunities": numberFeature("opportunity", "count", 0, 60, 3 * DAY_MS),
+  "role.opportunity_trend": numberFeature("opportunity", "relative-change", -1, 10, 3 * DAY_MS),
   "role.depth_chart_order": numberFeature("opportunity", "order", 1, 10, 7 * DAY_MS, { scale: 3 }),
   "efficiency.expected_points_per_opportunity": numberFeature("efficiency", "points", 0, 4, 14 * DAY_MS),
+  "efficiency.points_per_opportunity_trend": numberFeature("efficiency", "relative-change", -1, 10, 7 * DAY_MS),
+  "efficiency.receiving_epa_per_target": numberFeature("efficiency", "epa", -3, 5, 14 * DAY_MS),
+  "efficiency.rushing_epa_per_carry": numberFeature("efficiency", "epa", -3, 5, 14 * DAY_MS),
+  "efficiency.passing_epa_per_dropback": numberFeature("efficiency", "epa", -3, 5, 14 * DAY_MS),
   "market.player_points": numberFeature("market", "fantasy-points", 0, 80, 6 * HOUR_MS),
   "market.team_total": numberFeature("market", "points", 0, 70, 6 * HOUR_MS),
   "market.game_total": numberFeature("market", "points", 0, 100, 6 * HOUR_MS),

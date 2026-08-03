@@ -1,10 +1,11 @@
 "use strict";
 
 const { forEachCsvRow } = require("../scripts/lib/csv.js");
+const { NflverseFeatureStore } = require("./nflverse-feature-store.js");
 const { DAY_MS } = require("./free-source-catalog.js");
 const { normalizePosition, normalizeTeam } = require("./player-identity.js");
 
-const NFLVERSE_CONNECTOR_VERSION = "oracle-nflverse-connector-2026.1";
+const NFLVERSE_CONNECTOR_VERSION = "oracle-nflverse-connector-2026.2";
 const RELEASE_BASE = "https://github.com/nflverse/nflverse-data/releases/download";
 const SKILL_POSITIONS = new Set(["QB", "RB", "WR", "TE", "K"]);
 
@@ -88,11 +89,28 @@ function normalizeWeeklyOutcome(row = {}, seasonOverride = null) {
     targets: finite(row.targets),
     carries: finite(row.carries),
     passAttempts: finite(row.attempts || row.passing_attempts),
+    sacksSuffered: finite(row.sacks_suffered),
+    targetShare: finite(row.target_share, Number.NaN),
+    airYardsShare: finite(row.air_yards_share, Number.NaN),
+    wopr: finite(row.wopr, Number.NaN),
+    receivingEpa: finite(row.receiving_epa, Number.NaN),
+    rushingEpa: finite(row.rushing_epa, Number.NaN),
+    passingEpa: finite(row.passing_epa, Number.NaN),
   };
 }
 
 function mean(values) {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+}
+
+function relativeTrend(rows, field) {
+  if (rows.length < 4) return null;
+  const short = rows.slice(0, 3).map((row) => row[field]).filter(Number.isFinite);
+  const long = rows.slice(3).map((row) => row[field]).filter(Number.isFinite);
+  const recent = mean(short);
+  const prior = mean(long);
+  if (!Number.isFinite(recent) || !Number.isFinite(prior) || prior <= 0) return null;
+  return clamp(recent / prior - 1, -1, 10);
 }
 
 function teamWeekTotals(outcomes) {
@@ -122,7 +140,9 @@ function rollingEvidence(outcomes, options = {}) {
   }
   const observations = [];
   for (const [entityId, allRows] of byPlayer) {
-    const rows = allRows.sort((left, right) => right.week - left.week).slice(0, lookback);
+    const sortedRows = [...allRows].sort((left, right) => right.week - left.week);
+    const rows = sortedRows.slice(0, lookback);
+    const contextRows = sortedRows.slice(0, 8);
     if (rows.length < 2) continue;
     const latestWeek = Math.max(...rows.map((row) => row.week));
     const source = {
@@ -153,7 +173,32 @@ function rollingEvidence(outcomes, options = {}) {
         value: rows.reduce((sum, row) => sum + row.pointsPpr, 0) / totalOpportunities,
       });
     }
+    const contextCommon = {
+      ...common,
+      confidence: clamp(0.5 + contextRows.length * 0.07, 0.5, 0.82),
+      metadata: { ...common.metadata, lookbackWeeks: contextRows.map((row) => row.week) },
+    };
+    const trendMetadata = {
+      ...contextCommon.metadata,
+      recentWeeks: contextRows.slice(0, 3).map((row) => row.week),
+      priorWeeks: contextRows.slice(3).map((row) => row.week),
+    };
+    const opportunityTrend = relativeTrend(contextRows, "opportunities");
+    if (opportunityTrend !== null) observations.push({
+      ...contextCommon,
+      feature: "role.opportunity_trend",
+      value: opportunityTrend,
+      metadata: trendMetadata,
+    });
+    const pointsPerOpportunityTrend = relativeTrend(contextRows, "pointsPerOpportunity");
+    if (pointsPerOpportunityTrend !== null) observations.push({
+      ...contextCommon,
+      feature: "efficiency.points_per_opportunity_trend",
+      value: pointsPerOpportunityTrend,
+      metadata: trendMetadata,
+    });
     const targetShares = rows.map((row) => {
+      if (Number.isFinite(row.targetShare)) return row.targetShare;
       const total = totals.get(`${row.team}|${row.week}`)?.targets || 0;
       return total > 0 ? row.targets / total : null;
     }).filter((value) => value !== null);
@@ -164,6 +209,19 @@ function rollingEvidence(outcomes, options = {}) {
         value: mean(targetShares),
       });
     }
+    const airYardsShares = contextRows.map((row) => row.airYardsShare)
+      .filter(Number.isFinite);
+    if (airYardsShares.length >= 2 && ["WR", "TE", "RB"].includes(rows[0].position)) {
+      observations.push({
+        ...contextCommon,
+        feature: "role.air_yards_share",
+        value: mean(airYardsShares),
+      });
+    }
+    const woprRows = contextRows.map((row) => row.wopr).filter(Number.isFinite);
+    if (woprRows.length >= 2 && ["WR", "TE", "RB"].includes(rows[0].position)) {
+      observations.push({ ...contextCommon, feature: "role.wopr", value: mean(woprRows) });
+    }
     const carryShares = rows.map((row) => {
       const total = totals.get(`${row.team}|${row.week}`)?.carries || 0;
       return total > 0 ? row.carries / total : null;
@@ -173,6 +231,38 @@ function rollingEvidence(outcomes, options = {}) {
         ...common,
         feature: "role.carry_share",
         value: mean(carryShares),
+      });
+    }
+    const totalTargets = contextRows.reduce((sum, row) => sum + row.targets, 0);
+    const receivingEpa = contextRows.filter((row) => Number.isFinite(row.receivingEpa))
+      .reduce((sum, row) => sum + row.receivingEpa, 0);
+    if (totalTargets >= 4 && ["RB", "WR", "TE"].includes(rows[0].position)) {
+      observations.push({
+        ...contextCommon,
+        feature: "efficiency.receiving_epa_per_target",
+        value: receivingEpa / totalTargets,
+      });
+    }
+    const totalCarries = contextRows.reduce((sum, row) => sum + row.carries, 0);
+    const rushingEpa = contextRows.filter((row) => Number.isFinite(row.rushingEpa))
+      .reduce((sum, row) => sum + row.rushingEpa, 0);
+    if (totalCarries >= 4 && ["QB", "RB", "WR"].includes(rows[0].position)) {
+      observations.push({
+        ...contextCommon,
+        feature: "efficiency.rushing_epa_per_carry",
+        value: rushingEpa / totalCarries,
+      });
+    }
+    const totalDropbacks = contextRows.reduce(
+      (sum, row) => sum + row.passAttempts + row.sacksSuffered, 0,
+    );
+    const passingEpa = contextRows.filter((row) => Number.isFinite(row.passingEpa))
+      .reduce((sum, row) => sum + row.passingEpa, 0);
+    if (totalDropbacks >= 8 && rows[0].position === "QB") {
+      observations.push({
+        ...contextCommon,
+        feature: "efficiency.passing_epa_per_dropback",
+        value: passingEpa / totalDropbacks,
       });
     }
   }
@@ -205,7 +295,13 @@ class NflverseConnector {
     if (!options.identityResolver) throw new TypeError("NflverseConnector requires an identity resolver");
     this.cache = options.cache;
     this.identity = options.identityResolver;
+    this.datasetProvider = typeof options.datasetProvider === "function"
+      ? options.datasetProvider : null;
     this.clock = options.clock || Date.now;
+    this.features = this.datasetProvider ? new NflverseFeatureStore({
+      cache: this.cache, identityResolver: this.identity,
+      datasetProvider: this.datasetProvider, clock: this.clock,
+    }) : null;
   }
 
   async syncPlayers(options = {}) {
@@ -264,11 +360,22 @@ class NflverseConnector {
     const currentWeek = Math.max(1, Number(options.currentWeek || 1));
     const players = await this.syncPlayers(options);
     const seasonResult = await this.syncSeason(season, options);
-    const observations = rollingEvidence(seasonResult.outcomes, {
+    const baseObservations = rollingEvidence(seasonResult.outcomes, {
       currentWeek,
       lookback: options.lookback,
       now: this.clock(),
     });
+    const features = this.features && options.advancedFeatures !== false
+      ? await this.features.sync({
+        season, currentWeek, lookback: options.lookback,
+        force: options.force, asOf: options.asOf,
+        datasets: options.featureDatasets,
+      })
+      : null;
+    const observations = [
+      ...baseObservations,
+      ...(features?.observations || []),
+    ];
     return {
       version: NFLVERSE_CONNECTOR_VERSION,
       syncedAt: new Date(this.clock()).toISOString(),
@@ -287,7 +394,13 @@ class NflverseConnector {
           .sort((left, right) => left - right),
       },
       observations,
-      stale: players.stale || seasonResult.stale,
+      baseObservations: baseObservations.length,
+      features: features ? {
+        version: features.version, successes: features.successes,
+        failures: features.failures, feeds: features.feeds,
+        observations: features.observations.length, stale: features.stale,
+      } : null,
+      stale: players.stale || seasonResult.stale || features?.stale === true,
       attribution: {
         name: "nflverse",
         license: "CC-BY-4.0",
@@ -311,6 +424,7 @@ module.exports = {
   normalizedPlayerRow,
   opportunityCount,
   playerUrl,
+  relativeTrend,
   rollingEvidence,
   teamWeekTotals,
   weeklyStatsUrl,

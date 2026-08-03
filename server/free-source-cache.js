@@ -5,8 +5,9 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 
 const { canonicalize, sha256 } = require("./lineage.js");
+const { assertPerpetualFreeSource } = require("./free-source-policy.js");
 
-const FREE_SOURCE_CACHE_VERSION = "oracle-free-source-cache-2026.1";
+const FREE_SOURCE_CACHE_VERSION = "oracle-free-source-cache-2026.2";
 
 function finite(value, fallback = 0) {
   const number = Number(value);
@@ -48,6 +49,7 @@ async function readJson(filePath, fallback = null) {
 }
 
 function sourceDefinition(input = {}) {
+  const compliance = assertPerpetualFreeSource(input);
   const id = String(input.id || "").trim();
   if (!id) throw new TypeError("Free source definition requires an id");
   const origins = [...new Set((input.origins || []).map((value) => new URL(value).origin))];
@@ -63,6 +65,11 @@ function sourceDefinition(input = {}) {
     attribution: String(input.attribution || id),
     license: String(input.license || "unspecified"),
     termsUrl: input.termsUrl ? String(input.termsUrl) : null,
+    access: Object.freeze({ ...(input.access || {}) }),
+    cost: Object.freeze({ ...(input.cost || {}) }),
+    operations: Object.freeze({ ...(input.operations || {}) }),
+    usage: Object.freeze({ ...(input.usage || {}) }),
+    compliance,
     maxBytes: clampInteger(input.maxBytes, 20 * 1024 * 1024, 1024, 250 * 1024 * 1024),
     minFetchIntervalMs: clampInteger(input.minFetchIntervalMs, 60_000, 0, 30 * 24 * 60 * 60 * 1000),
     maxStaleMs: clampInteger(input.maxStaleMs, 7 * 24 * 60 * 60 * 1000, 0, 365 * 24 * 60 * 60 * 1000),
@@ -264,7 +271,7 @@ class FreeSourceCache {
 
     const headers = {
       accept: options.accept || "*/*",
-      "user-agent": options.userAgent || "fantasy-football-oracle-free-intelligence/5.1",
+      "user-agent": options.userAgent || "fantasy-football-oracle-free-intelligence/5.2",
       ...(options.headers || {}),
     };
     if (cached.metadata?.etag) headers["if-none-match"] = cached.metadata.etag;
@@ -384,6 +391,11 @@ class FreeSourceCache {
           attribution: definition.attribution,
           license: definition.license,
           termsUrl: definition.termsUrl,
+          compliance: definition.compliance,
+          access: { ...definition.access },
+          cost: { ...definition.cost },
+          operations: { ...definition.operations },
+          usage: { ...definition.usage },
           origins: [...definition.origins],
           redirectOrigins: [...definition.redirectOrigins],
           limits: {
@@ -408,6 +420,11 @@ class FreeSourceCache {
         pathPrefixes: definition.pathPrefixes,
         license: definition.license,
         termsUrl: definition.termsUrl,
+        compliance: definition.compliance,
+        access: definition.access,
+        cost: definition.cost,
+        operations: definition.operations,
+        usage: definition.usage,
       })))),
     };
   }

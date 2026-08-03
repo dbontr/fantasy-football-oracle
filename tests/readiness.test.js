@@ -50,6 +50,8 @@ test("readiness is healthy when required dependencies are healthy", () => {
     advancedEvidenceValid: true,
     freeReady: null,
     freeJournalValid: null,
+    freeContextPolicyValid: null,
+    freeContextPolicyApproved: null,
     failures: [],
   });
 });
@@ -133,4 +135,17 @@ test("readiness fails when the free forecast journal chain is invalid", () => {
   assert.equal(result.freeReady, true);
   assert.equal(result.freeJournalValid, false);
   assert.ok(result.failures.includes("free-journal-invalid"));
+});
+
+test("readiness fails when the free context policy is invalid", () => {
+  const result = readinessSnapshot(services({
+    controlPlane: {
+      free: { status: () => ({ initialized: true, journal: { valid: true },
+        contextPolicy: { valid: false, approved: false } }) },
+    },
+  }));
+  assert.equal(result.ready, false);
+  assert.equal(result.freeContextPolicyValid, false);
+  assert.equal(result.freeContextPolicyApproved, false);
+  assert.ok(result.failures.includes("free-context-policy-invalid"));
 });

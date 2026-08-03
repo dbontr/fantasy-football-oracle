@@ -6,7 +6,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { NflverseConnector, normalizeWeeklyOutcome } = require("../server/nflverse-connector.js");
+const { NflverseConnector, normalizeWeeklyOutcome, rollingEvidence } = require("../server/nflverse-connector.js");
 const { PlayerIdentityResolver } = require("../server/player-identity.js");
 
 async function fixture() {
@@ -97,4 +97,44 @@ test("nflverse sync learns identities and emits leakage-safe rolling evidence", 
   } finally {
     await fs.rm(context.directory, { recursive: true, force: true });
   }
+});
+
+
+test("rolling evidence emits training-compatible opportunity and efficiency trends", () => {
+  const outcomes = [1, 2, 3, 4, 5, 6].map((week) => {
+    const opportunities = week <= 3 ? 10 : 20;
+    const pointsPerOpportunity = week <= 3 ? 1 : 2;
+    return {
+      season: 2026,
+      week,
+      oraclePlayerId: "P1",
+      sourcePlayerId: "G1",
+      position: "WR",
+      team: "DET",
+      played: true,
+      opportunities,
+      pointsPerOpportunity,
+      pointsPpr: opportunities * pointsPerOpportunity,
+      targets: opportunities,
+      carries: 0,
+      passAttempts: 0,
+      sacksSuffered: 0,
+      targetShare: 0.25,
+      airYardsShare: 0.3,
+      wopr: 0.5,
+      receivingEpa: opportunities * 0.2,
+      rushingEpa: Number.NaN,
+      passingEpa: Number.NaN,
+    };
+  });
+  const rows = rollingEvidence(outcomes, { currentWeek: 7, lookback: 4, now: 0 });
+  const opportunity = rows.find((row) => row.feature === "role.opportunity_trend");
+  const efficiency = rows.find((row) => (
+    row.feature === "efficiency.points_per_opportunity_trend"
+  ));
+  assert.equal(opportunity.value, 1);
+  assert.equal(efficiency.value, 1);
+  assert.deepEqual(opportunity.metadata.recentWeeks, [6, 5, 4]);
+  assert.deepEqual(opportunity.metadata.priorWeeks, [3, 2, 1]);
+  assert.equal(opportunity.metadata.lookbackWeeks.every((week) => week < 7), true);
 });

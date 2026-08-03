@@ -1,0 +1,252 @@
+{
+  "version": "oracle-free-context-policy-2026.1",
+  "schemaVersion": "free-context-policy/v1",
+  "generatedAt": "2026-08-03T14:04:37.653Z",
+  "source": {
+    "provider": "nflverse",
+    "license": "CC-BY-4.0",
+    "repository": "https://github.com/nflverse/nflverse-data"
+  },
+  "approved": true,
+  "features": [
+    "airYardsShare",
+    "wopr",
+    "receivingEpaPerTarget",
+    "rushingEpaPerCarry",
+    "passingEpaPerDropback",
+    "opportunityTrend",
+    "pointsPerOpportunityTrend"
+  ],
+  "runtimeFeatures": {
+    "airYardsShare": "role.air_yards_share",
+    "wopr": "role.wopr",
+    "receivingEpaPerTarget": "efficiency.receiving_epa_per_target",
+    "rushingEpaPerCarry": "efficiency.rushing_epa_per_carry",
+    "passingEpaPerDropback": "efficiency.passing_epa_per_dropback",
+    "opportunityTrend": "role.opportunity_trend",
+    "pointsPerOpportunityTrend": "efficiency.points_per_opportunity_trend"
+  },
+  "trainingSeasons": [
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "validationSeason": 2024,
+  "holdoutSeason": 2025,
+  "selection": {
+    "alpha": 10,
+    "cap": 1.5,
+    "strength": 1
+  },
+  "validation": {
+    "nestedChronological": true,
+    "productionOrderMatched": true,
+    "correctionTarget": "post-calibration residual",
+    "examples": 31682,
+    "innerTrainingSamples": 18727,
+    "validationSamples": 6392,
+    "fullTrainingSamples": 25119,
+    "holdoutSamples": 6563,
+    "validation": {
+      "before": {
+        "samples": 6392,
+        "mae": 4.29508,
+        "rmse": 6.01897,
+        "bias": -0.09857,
+        "brier": 0.0643,
+        "logLoss": 0.22232,
+        "wis": 2.63814,
+        "meanPinball": 1.45808,
+        "interval80Coverage": 0.86827,
+        "interval80Width": 13.33855
+      },
+      "after": {
+        "samples": 6392,
+        "mae": 4.20628,
+        "rmse": 5.96262,
+        "bias": -0.10057,
+        "brier": 0.0643,
+        "logLoss": 0.22232,
+        "wis": 2.60107,
+        "meanPinball": 1.43887,
+        "interval80Coverage": 0.86342,
+        "interval80Width": 13.09803
+      }
+    },
+    "holdout": {
+      "before": {
+        "samples": 6563,
+        "mae": 4.25642,
+        "rmse": 5.97913,
+        "bias": 0.20008,
+        "brier": 0.06693,
+        "logLoss": 0.22795,
+        "wis": 2.59695,
+        "meanPinball": 1.43823,
+        "interval80Coverage": 0.8749,
+        "interval80Width": 13.42517
+      },
+      "after": {
+        "samples": 6563,
+        "mae": 4.18279,
+        "rmse": 5.93962,
+        "bias": 0.18635,
+        "brier": 0.06693,
+        "logLoss": 0.22795,
+        "wis": 2.56918,
+        "meanPinball": 1.42335,
+        "interval80Coverage": 0.87079,
+        "interval80Width": 13.15874
+      }
+    },
+    "improvement": {
+      "wis": 0.02777,
+      "rmse": 0.03951,
+      "mae": 0.07363,
+      "brier": 0,
+      "logLoss": 0,
+      "meanPinball": 0.01488,
+      "interval80Coverage": -0.00411
+    },
+    "checks": {
+      "validationWisImproved": true,
+      "holdoutWisImproved": true,
+      "holdoutRmseDidNotRegress": true,
+      "holdoutMaeDidNotRegress": true,
+      "holdoutCoverageIsCalibrated": true,
+      "correctionIsBounded": true
+    },
+    "correction": {
+      "mean": -0.014909787002695341,
+      "absoluteMean": 0.530428984850933
+    }
+  },
+  "models": {
+    "QB": {
+      "means": {
+        "airYardsShare": -0.00014983106197992877,
+        "wopr": 0.0005792258079083245,
+        "receivingEpaPerTarget": -0.528355672754162,
+        "rushingEpaPerCarry": -0.005348935575864024,
+        "passingEpaPerDropback": -0.0024155521469525843,
+        "opportunityTrend": 0.2666075832495566,
+        "pointsPerOpportunityTrend": 0.16789225779020173
+      },
+      "scales": {
+        "airYardsShare": 0.05,
+        "wopr": 0.05,
+        "receivingEpaPerTarget": 1.8264621123927112,
+        "rushingEpaPerCarry": 0.5930001316300142,
+        "passingEpaPerDropback": 0.3269611888945899,
+        "opportunityTrend": 1.2947733438054896,
+        "pointsPerOpportunityTrend": 0.9405706139629045
+      },
+      "coefficients": [
+        -0.5795856171470792,
+        1.6307084096254456,
+        -0.38914054302788514,
+        0.1883704830898523,
+        0.3749516008123695,
+        0.4316565773990342,
+        -0.4334469811020896
+      ],
+      "samples": 2577,
+      "alpha": 10
+    },
+    "RB": {
+      "means": {
+        "airYardsShare": -0.0012368616938335415,
+        "wopr": 0.1038109434921135,
+        "receivingEpaPerTarget": 0.0010057022485979376,
+        "rushingEpaPerCarry": -0.08777718395796603,
+        "passingEpaPerDropback": -0.6194581792708663,
+        "opportunityTrend": 0.2520620345441301,
+        "pointsPerOpportunityTrend": 0.18513661959185826
+      },
+      "scales": {
+        "airYardsShare": 0.05,
+        "wopr": 0.07583228488954975,
+        "receivingEpaPerTarget": 0.5725970318504278,
+        "rushingEpaPerCarry": 0.32636846187886964,
+        "passingEpaPerDropback": 2.2477122233284033,
+        "opportunityTrend": 1.0423421200868288,
+        "pointsPerOpportunityTrend": 0.9714400584350804
+      },
+      "coefficients": [
+        -0.9489830338977167,
+        0.6507026590690074,
+        -0.12264290329666742,
+        0.060846521059910355,
+        0.5325883660753937,
+        -0.01900604736000173,
+        -0.18722081597358378
+      ],
+      "samples": 6020,
+      "alpha": 10
+    },
+    "WR": {
+      "means": {
+        "airYardsShare": 0.1884534365660556,
+        "wopr": 0.34594615117920774,
+        "receivingEpaPerTarget": 0.1757837659983421,
+        "rushingEpaPerCarry": 0.07591617110271745,
+        "passingEpaPerDropback": 0.1140352695836888,
+        "opportunityTrend": 0.15800073238052614,
+        "pointsPerOpportunityTrend": 0.15870554257189073
+      },
+      "scales": {
+        "airYardsShare": 0.12562335957699933,
+        "wopr": 0.2075881226095279,
+        "receivingEpaPerTarget": 0.6499342614820792,
+        "rushingEpaPerCarry": 0.9583116459369245,
+        "passingEpaPerDropback": 2.038825515592077,
+        "opportunityTrend": 0.6780099173228146,
+        "pointsPerOpportunityTrend": 0.9419901561159875
+      },
+      "coefficients": [
+        -0.7348294814397789,
+        1.639085872149342,
+        -0.12886665591323948,
+        -0.11123728533481372,
+        0.6890439472004185,
+        -0.19487594485042267,
+        -0.36550470304189375
+      ],
+      "samples": 9624,
+      "alpha": 10
+    },
+    "TE": {
+      "means": {
+        "airYardsShare": 0.0857153175334569,
+        "wopr": 0.21362977250473836,
+        "receivingEpaPerTarget": 0.1740369208414368,
+        "rushingEpaPerCarry": 0.06883373154960543,
+        "passingEpaPerDropback": -0.07909316955776319,
+        "opportunityTrend": 0.1879509723290582,
+        "pointsPerOpportunityTrend": 0.16735488261581838
+      },
+      "scales": {
+        "airYardsShare": 0.07120239148587577,
+        "wopr": 0.13676345964010636,
+        "receivingEpaPerTarget": 0.581487855171421,
+        "rushingEpaPerCarry": 1.1280310066473467,
+        "passingEpaPerDropback": 0.8433653000685153,
+        "opportunityTrend": 0.6297210659737127,
+        "pointsPerOpportunityTrend": 0.8003441898217425
+      },
+      "coefficients": [
+        -0.5617868176359639,
+        1.2286354552630274,
+        -0.23351157605146794,
+        -0.43885993018159075,
+        -0.023312587961897554,
+        -0.2523152009332994,
+        -0.37171284433938406
+      ],
+      "samples": 4757,
+      "alpha": 10
+    }
+  },
+  "digest": "8b8fa0e6e6c27116221bfec996c027d9b06c16e8a65b9e87dca1f44292a19f0f"
+}

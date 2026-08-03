@@ -48,6 +48,10 @@ module.exports = Object.freeze({
     process.env.ORACLE_FREE_CALIBRATION_PATH
       || path.join(rootDir, "data", "calibration", "free-probabilistic.json"),
   ),
+  freeContextPolicyPath: path.resolve(
+    process.env.ORACLE_FREE_CONTEXT_POLICY_PATH
+      || path.join(rootDir, "data", "calibration", "free-context-policy.json"),
+  ),
   shutdownRequestPath: process.env.ORACLE_SHUTDOWN_REQUEST_PATH
     ? path.resolve(process.env.ORACLE_SHUTDOWN_REQUEST_PATH)
     : "",
@@ -93,7 +97,7 @@ module.exports = Object.freeze({
   maxAdvancedScenarios: integer(
     process.env.ORACLE_MAX_ADVANCED_SCENARIOS, 50_000, 100, 50_000,
   ),
-  freeSources: stringList(process.env.ORACLE_FREE_SOURCES),
+  freeSources: stringList(process.env.ORACLE_FREE_SOURCES || "sleeper,nflverse,nws"),
   freeSyncEnabled: process.env.ORACLE_FREE_SYNC_ENABLED === "true",
   freeSyncIntervalMs: duration(
     process.env.ORACLE_FREE_SYNC_INTERVAL_MS,
@@ -102,8 +106,8 @@ module.exports = Object.freeze({
     7 * 24 * 60 * 60 * 1000,
   ),
   sleeperLeagueId: String(process.env.ORACLE_SLEEPER_LEAGUE_ID || ""),
-  openMeteoNonCommercialAcknowledged:
-    process.env.ORACLE_OPEN_METEO_NONCOMMERCIAL_ACK === "true",
+  nwsUserAgent: String(process.env.ORACLE_NWS_USER_AGENT
+    || "FantasyFootballOracle/5.2 (https://github.com/dbontr/fantasy-football-oracle)"),
   maxForecastJournalRecords: integer(
     process.env.ORACLE_MAX_FORECAST_JOURNAL_RECORDS, 200_000, 1000, 2_000_000,
   ),
